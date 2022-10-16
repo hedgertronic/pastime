@@ -57,6 +57,7 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
             subset=columns[2:]
         )
 
+        # TODO: Fix when missing first name
         lookup_table = lookup_table.with_column(
             (pl.col("name_first") + " " + pl.col("name_last")).alias("name_full")
         )
@@ -74,7 +75,7 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
     return lookup_table
 
 
-def lookup_id(player_id: int | str, *, refresh: bool = False):
+def lookup_id(player_id: int | str, *, refresh: bool = False) -> pl.DataFrame:
     data = get_lookup_table(refresh=refresh).filter(
         (pl.col("key_mlbam").cast(str) == str(player_id))
         | (pl.col("key_fangraphs").cast(str) == str(player_id))
@@ -84,8 +85,7 @@ def lookup_id(player_id: int | str, *, refresh: bool = False):
 
     if data.is_empty():
         raise ValueError(
-            f"Invalid player id '{player_id}' provided."
-            " Use 'pastime.lookup.lookup_name()' to get IDs for players by name."
+            f"Invalid player id: '{player_id}'."
             " If you think the lookup table may be out of date, you can refresh it by"
             " including 'refresh=True' in your function call."
         )
@@ -97,7 +97,7 @@ def lookup_name(
     name: str = "",
     *,
     refresh: bool = False,
-):
+) -> pl.DataFrame:
     lookup_table = get_lookup_table(refresh=refresh)
 
     name = name.strip().lower()
@@ -110,10 +110,46 @@ def lookup_name(
 
     if data.is_empty():
         raise ValueError(
-            f"Invalid player name '{name}' provided."
-            " Use 'pastime.lookup.lookup_id()' to get names for players by ID."
+            f"Invalid player name: '{name}'."
             " If you think the lookup table may be out of date, you can refresh it by"
             " including 'refresh=True' in your function call."
         )
 
     return data
+
+
+def get_name(player_id: int | str, *, refresh: bool = False) -> str:
+    table = lookup_id(player_id, refresh=refresh)
+
+    if table.is_empty():
+        raise ValueError(
+            f"Invalid player id: '{player_id}'."
+            " If you think the lookup table may be out of date, you can refresh it by"
+            " including 'refresh=True' in your function call."
+        )
+
+    return table["name_full"][0]
+
+
+def get_id(
+    name: str, source: str = "mlbam", start_year: str = None, *, refresh: bool = False
+) -> int:
+    if source not in ["mlbam", "fangraphs", "bbref", "retro"]:
+        raise ValueError(f"Invalid source: '{source}'")
+
+    table = lookup_name(name, refresh=refresh)
+
+    if len(table) > 1 and start_year:
+        table = table.filter(pl.col("mlb_played_first") == start_year)
+
+    elif len(table) > 1 and not start_year:
+        table = table.sort("mlb_played_first")[-1]
+
+    if table.is_empty():
+        raise ValueError(
+            f"Invalid player name: '{name}'."
+            " If you think the lookup table may be out of date, you can refresh it by"
+            " including 'refresh=True' in your function call."
+        )
+
+    return table[f"key_{source}"][0]
