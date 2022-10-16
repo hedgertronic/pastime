@@ -1,0 +1,2247 @@
+{
+    "exit_velocity": {
+        "name": "exit_velocity",
+        "slug": "statcast",
+        "fields": {
+            "player_type": {
+                "name": "player_type",
+                "slug": "type",
+                "choices": {
+                    "default": "batter",
+                    "batters": "batter",
+                    "pitchers": "pitcher",
+                    "team batters": "batter-team",
+                    "team pitchers": "pitcher-team"
+                },
+                "field_type": "single-select"
+            },
+            "position": {
+                "name": "position",
+                "slug": "position",
+                "choices": {
+                    "c": "2",
+                    "1b": "3",
+                    "2b": "4",
+                    "ss": "6",
+                    "3b": "5",
+                    "lf": "7",
+                    "cf": "8",
+                    "rf": "9",
+                    "dh": "10"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "108",
+                    "astros": "117",
+                    "athletics": "133",
+                    "blue jays": "141",
+                    "braves": "144",
+                    "brewers": "158",
+                    "cardinals": "138",
+                    "cubs": "112",
+                    "d-backs": "109",
+                    "dodgers": "119",
+                    "giants": "137",
+                    "guardians": "114",
+                    "mariners": "136",
+                    "marlins": "146",
+                    "mets": "121",
+                    "nationals": "120",
+                    "orioles": "110",
+                    "padres": "135",
+                    "phillies": "143",
+                    "pirates": "134",
+                    "rangers": "140",
+                    "rays": "139",
+                    "reds": "113",
+                    "red sox": "111",
+                    "rockies": "115",
+                    "royals": "118",
+                    "tigers": "116",
+                    "twins": "142",
+                    "white sox": "145",
+                    "yankees": "147"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015"
+                },
+                "field_type": "single-select"
+            },
+            "minimum_bbe": {
+                "name": "minimum_bbe",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "1": "1",
+                    "25": "25",
+                    "50": "50",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "350": "350",
+                    "450": "450",
+                    "500": "500",
+                    "600": "600"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "expected_stats": {
+        "name": "expected_stats",
+        "slug": "expected_statistics",
+        "fields": {
+            "player_type": {
+                "name": "player_type",
+                "slug": "type",
+                "choices": {
+                    "default": "batter",
+                    "batters": "batter",
+                    "pitchers": "pitcher",
+                    "team batters": "batter-team",
+                    "team pitchers": "pitcher-team"
+                },
+                "field_type": "single-select"
+            },
+            "position": {
+                "name": "position",
+                "slug": "position",
+                "choices": {
+                    "c": "2",
+                    "1b": "3",
+                    "2b": "4",
+                    "ss": "6",
+                    "3b": "5",
+                    "lf": "7",
+                    "cf": "8",
+                    "rf": "9",
+                    "dh": "10"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "108",
+                    "astros": "117",
+                    "athletics": "133",
+                    "blue jays": "141",
+                    "braves": "144",
+                    "brewers": "158",
+                    "cardinals": "138",
+                    "cubs": "112",
+                    "d-backs": "109",
+                    "dodgers": "119",
+                    "giants": "137",
+                    "guardians": "114",
+                    "mariners": "136",
+                    "marlins": "146",
+                    "mets": "121",
+                    "nationals": "120",
+                    "orioles": "110",
+                    "padres": "135",
+                    "phillies": "143",
+                    "pirates": "134",
+                    "rangers": "140",
+                    "rays": "139",
+                    "reds": "113",
+                    "red sox": "111",
+                    "rockies": "115",
+                    "royals": "118",
+                    "tigers": "116",
+                    "twins": "142",
+                    "white sox": "145",
+                    "yankees": "147"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015"
+                },
+                "field_type": "single-select"
+            },
+            "minimum_bip": {
+                "name": "minimum_bip",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "1": "1",
+                    "25": "25",
+                    "50": "50",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "350": "350",
+                    "450": "450",
+                    "500": "500",
+                    "600": "600"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "percentile_rankings": {
+        "name": "percentile_rankings",
+        "slug": "percentile-rankings",
+        "fields": {
+            "player_type": {
+                "name": "player_type",
+                "slug": "type",
+                "choices": {
+                    "default": "batter",
+                    "batters": "batter",
+                    "pitchers": "pitcher"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "Angels",
+                    "astros": "Astros",
+                    "athletics": "Athletics",
+                    "blue jays": "Blue Jays",
+                    "braves": "Braves",
+                    "brewers": "Brewers",
+                    "cardinals": "Cardinals",
+                    "cubs": "Cubs",
+                    "d-backs": "Diamondbacks",
+                    "dodgers": "Dodgers",
+                    "giants": "Giants",
+                    "guardians": "Guardians",
+                    "mariners": "Mariners",
+                    "marlins": "Marlins",
+                    "mets": "Mets",
+                    "nationals": "Nationals",
+                    "orioles": "Orioles",
+                    "padres": "Padres",
+                    "phillies": "Phillies",
+                    "pirates": "Pirates",
+                    "rangers": "Rangers",
+                    "rays": "Rays",
+                    "red sox": "Red Sox",
+                    "reds": "Reds",
+                    "rockies": "Rockies",
+                    "royals": "Royals",
+                    "tigers": "Tigers",
+                    "twins": "Twins",
+                    "white sox": "White Sox",
+                    "yankees": "Yankees"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "swing_take": {
+        "name": "swing_take",
+        "slug": "swing-take",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "2014": "2014",
+                    "2013": "2013",
+                    "2012": "2012",
+                    "2011": "2011",
+                    "2010": "2010",
+                    "2009": "2009",
+                    "2008": "2008"
+                },
+                "field_type": "single-select"
+            },
+            "player_type": {
+                "name": "player_type",
+                "slug": "group",
+                "choices": {
+                    "default": "Batter",
+                    "batters": "Batter",
+                    "pitchers": "Pitcher"
+                },
+                "field_type": "single-select"
+            },
+            "group": {
+                "name": "group",
+                "slug": "type",
+                "choices": {
+                    "default": "All",
+                    "all": "All",
+                    "swing/take": "Swing-Take",
+                    "pitch type": "Pitch Type",
+                    "attack region": "Attack Region",
+                    "handedness": "Bat-side"
+                },
+                "field_type": "single-select"
+            },
+            "subgroup": {
+                "name": "subgroup",
+                "slug": "sub_type",
+                "choices": {
+                    "swing": "Swing",
+                    "take": "Take",
+                    "fastball": "Fastball",
+                    "curve": "Curve",
+                    "cutter": "Cutter",
+                    "changeup": "Changeup",
+                    "slider": "Slider",
+                    "other": "Other",
+                    "heart": "Heart",
+                    "shadow": "Shadow",
+                    "chase": "Chase",
+                    "waste": "Waste",
+                    "R": "R",
+                    "L": "L"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "500": "500",
+                    "600": "600",
+                    "700": "700",
+                    "800": "800",
+                    "900": "900",
+                    "1000": "1000",
+                    "1500": "1500"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "pitch_arsenals": {
+        "name": "pitch_arsenals",
+        "slug": "pitch-arsenals",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017"
+                },
+                "field_type": "single-select"
+            },
+            "metric": {
+                "name": "metric",
+                "slug": "type",
+                "choices": {
+                    "default": "avg_speed",
+                    "average speed": "avg_speed",
+                    "percentage": "n_",
+                    "average spin": "avg_spin"
+                },
+                "field_type": "single-select"
+            },
+            "handedness": {
+                "name": "handedness",
+                "slug": "hand",
+                "choices": {
+                    "rhp": "R",
+                    "lhp": "L"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "250",
+                    "50": "50",
+                    "100": "100",
+                    "250": "250",
+                    "500": "500",
+                    "750": "750",
+                    "1000": "1000",
+                    "1500": "1500",
+                    "2000": "2000",
+                    "2500": "2500",
+                    "3000": "3000"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "pitch_arsenal_stats": {
+        "name": "pitch_arsenal_stats",
+        "slug": "pitch-arsenal-stats",
+        "fields": {
+            "player_type": {
+                "name": "player_types",
+                "slug": "type",
+                "choices": {
+                    "default": "pitcher",
+                    "pitchers": "pitcher",
+                    "batters": "batter"
+                },
+                "field_type": "single-select"
+            },
+            "pitch_type": {
+                "name": "pitch_type",
+                "slug": "pitchType",
+                "choices": {
+                    "4-seamer": "FF",
+                    "sinker": "SIFT",
+                    "changeup": "CH",
+                    "curveball": "CUKC",
+                    "cutter": "FC",
+                    "slider": "SL",
+                    "splitter": "FS"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019"
+                },
+                "field_type": "single-select"
+            },
+            "min_pa": {
+                "name": "min_pa",
+                "slug": "min",
+                "choices": {
+                    "default": "10",
+                    "1": "1",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "350": "350",
+                    "450": "450",
+                    "500": "500",
+                    "600": "600"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "home_runs": {
+        "name": "home_runs",
+        "slug": "home-runs",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019"
+                },
+                "field_type": "single-select"
+            },
+            "player_type": {
+                "name": "player_type",
+                "slug": "player_type",
+                "choices": {
+                    "default": "Batter",
+                    "batters": "Batter",
+                    "pitchers": "Pitcher"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "min_hr": {
+                "name": "min_hr",
+                "slug": "min",
+                "choices": {
+                    "default": "0",
+                    "0": "0",
+                    "5": "5",
+                    "10": "10",
+                    "15": "15",
+                    "20": "20",
+                    "25": "25"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "year_to_year_changes": {
+        "name": "year_to_year_changes",
+        "slug": "statcast-year-to-year",
+        "fields": {
+            "player_type": {
+                "name": "player_type",
+                "slug": "playerType",
+                "choices": {
+                    "batters": "Batter",
+                    "pitchers": "Pitcher",
+                    "team batting": "Batter Team",
+                    "team pitching": "Pitcher Team"
+                },
+                "field_type": "single-select"
+            },
+            "stat_type": {
+                "name": "stat_type",
+                "slug": "type",
+                "choices": {
+                    "default": "hard_hit_percent",
+                    "hard hit %": "hard_hit_percent",
+                    "avg exit velocity": "exit_velocity_avg",
+                    "sweet spot %": "sweet_spot_percent",
+                    "barrel %": "barrel_batted_rate",
+                    "avg launch angle": "launch_angle_avg",
+                    "k%": "k_percent",
+                    "bb%": "bb_percent",
+                    "fastball velocity": "fastball_velo",
+                    "breaking velocity": "breaking_velo",
+                    "offspeed velocity": "offspeed_velo",
+                    "ba": "ba",
+                    "xba": "xba",
+                    "bacon": "bacon",
+                    "xbacon": "xbacon",
+                    "babip": "babip",
+                    "obp": "obp",
+                    "slg": "slg",
+                    "xobp": "xobp",
+                    "xslg": "xslg",
+                    "iso": "iso",
+                    "xiso": "xiso",
+                    "woba": "woba",
+                    "xwoba": "xwoba",
+                    "wobacon": "wobacon",
+                    "xwobacon": "xwobacon",
+                    "barrels": "barrel",
+                    "popup %": "popups_percent",
+                    "flyball %": "flyballs_percent",
+                    "line drive %": "linedrives_percent",
+                    "groundball %": "groundballs_percent",
+                    "pull %": "pull_percent",
+                    "straight away %": "straightaway_percent",
+                    "opposite field %": "opposite_percent",
+                    "weak contact %": "poorlyweak_percent",
+                    "topped contact %": "poorlytopped_percent",
+                    "under contact %": "poorlyunder_percent",
+                    "flare/burner contact %": "flareburner_percent",
+                    "solid contact %": "solidcontact_percent",
+                    "hr/fb %": "hr_flyballs_percent",
+                    "pitches": "pitch_count",
+                    "in zone %": "in_zone_percent",
+                    "out of zone %": "out_zone_percent",
+                    "edge %": "edge_percent",
+                    "zone swing %": "z_swing_percent",
+                    "out of zone swing %": "oz_swing_percent",
+                    "in zone contact %": "iz_contact_percent",
+                    "out of zone contact %": "oz_contact_percent",
+                    "whiff %": "whiff_percent",
+                    "first strike %": "f_strike_percent",
+                    "first strike swing %": "f_swing_percent",
+                    "swing %": "swing_percent",
+                    "meatball swing %": "meatball_swing_percent",
+                    "meatball %": "meatball_percent",
+                    "zone swing & miss %": "z_swing_miss_percent",
+                    "out of zone swing & miss %": "oz_swing_miss_percent",
+                    "in zone": "in_zone",
+                    "out of zone": "out_zone",
+                    "edge": "edge",
+                    "popups": "popups",
+                    "flyballs": "flyballs",
+                    "line drives": "linedrives",
+                    "groundballs": "groundballs",
+                    "in zone swings": "in_zone_swing",
+                    "out of zone swings": "out_zone_swing",
+                    "in zone swing & misses": "in_zone_swing_miss",
+                    "out of zone swing & misses": "out_zone_swing_miss",
+                    "fastballs": "pitch_count_fastball",
+                    "offspeed": "pitch_count_offspeed",
+                    "breaking": "pitch_count_breaking",
+                    "pa": "pa",
+                    "ab": "ab",
+                    "hits": "hit",
+                    "singles": "single",
+                    "doubles": "double",
+                    "triples": "triple",
+                    "home runs": "home_run",
+                    "walks": "walk",
+                    "strikeouts": "strikeout",
+                    "hbp": "hbp",
+                    "batted balls": "batted_ball"
+                },
+                "field_type": "single-select"
+            },
+            "year_pair": {
+                "name": "year_pair",
+                "slug": "year",
+                "choices": {
+                    "default": "2021",
+                    "2015-2016": "2015",
+                    "2016-2017": "2016",
+                    "2017-2018": "2017",
+                    "2018-2019": "2018",
+                    "2019-2020": "2019",
+                    "2020-2021": "2020",
+                    "2021-2022": "2021"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "pitch_tempo": {
+        "name": "pitch_tempo",
+        "slug": "pitch-tempo",
+        "fields": {
+            "player_type": {
+                "name": "player_type",
+                "slug": "type",
+                "choices": {
+                    "default": "Pit",
+                    "pitcher": "Pit",
+                    "batter": "Bat"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "n",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "1": "1",
+                    "10": "10",
+                    "50": "50",
+                    "100": "100",
+                    "250": "250",
+                    "500": "500",
+                    "1000": "1000",
+                    "2000": "2000",
+                    "5000": "5000"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "split by stint": "split",
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "start_season": {
+                "name": "start_season",
+                "slug": "season_start",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "2014": "2014",
+                    "2013": "2013",
+                    "2012": "2012",
+                    "2011": "2011",
+                    "2010": "2010"
+                },
+                "field_type": "single-select"
+            },
+            "end_season": {
+                "name": "end_season",
+                "slug": "season_end",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "2014": "2014",
+                    "2013": "2013",
+                    "2012": "2012",
+                    "2011": "2011",
+                    "2010": "2010"
+                },
+                "field_type": "single-select"
+            },
+            "split_seasons": {
+                "name": "split_seasons",
+                "slug": "split",
+                "choices": {
+                    "default": "no",
+                    "yes": "yes",
+                    "no": "no"
+                },
+                "field_type": "single-select"
+            },
+            "with_team_only": {
+                "name": "with_team_only",
+                "slug": "with_team_only",
+                "choices": {
+                    "default": "1",
+                    "yes": "1"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "pitch_movement": {
+        "name": "pitch_movement",
+        "slug": "pitch-movement",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017"
+                },
+                "field_type": "single-select"
+            },
+            "pitch_type": {
+                "name": "pitch_type",
+                "slug": "type",
+                "choices": {
+                    "default": "FF",
+                    "4-seamer": "FF",
+                    "sinker": "SIFT",
+                    "changeup": "CH",
+                    "curveball": "CUKC",
+                    "cutter": "FC",
+                    "slider": "SL",
+                    "splitter": "FS",
+                    "all pitches": "ALL"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "handedness": {
+                "name": "handedness",
+                "slug": "hand",
+                "choices": {
+                    "rhp": "R",
+                    "lhp": "L"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "50": "50",
+                    "100": "100",
+                    "250": "250",
+                    "500": "500",
+                    "750": "750",
+                    "1000": "1000",
+                    "1500": "1500",
+                    "2000": "2000",
+                    "2500": "2500",
+                    "3000": "3000"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "active_spin": {
+        "name": "active_spin",
+        "slug": "active-spin",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022_spin-based",
+                    "2022 spin based": "2022_spin-based",
+                    "2022 observed": "2022_observed",
+                    "2021 spin based": "2021_spin-based",
+                    "2021 observed": "2021_observed",
+                    "2020 spin based": "2020_spin-based",
+                    "2020 observed": "2020_observed",
+                    "2019 observed": "2019_observed",
+                    "2018 observed": "2018_observed",
+                    "2017 observed": "2017_observed"
+                },
+                "field_type": "single-select"
+            },
+            "handedness": {
+                "name": "handedness",
+                "slug": "hand",
+                "choices": {
+                    "rhp": "R",
+                    "lhp": "L"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "50",
+                    "50": "50",
+                    "100": "100",
+                    "250": "250",
+                    "500": "500",
+                    "750": "750",
+                    "1000": "1000",
+                    "1500": "1500",
+                    "2000": "2000",
+                    "2500": "2500",
+                    "3000": "3000"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "spin_direction_comparison": {
+        "name": "spin_direction_comparison",
+        "slug": "spin-direction-comparison",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "pitch_types": {
+                "name": "pitch_types",
+                "slug": "type",
+                "choices": {
+                    "default": "4-Seamer / Changeup",
+                    "FF/CU": "4-Seamer / Curveball",
+                    "FF/CH": "4-Seamer / Changeup",
+                    "FF/FC": "4-Seamer / Cutter",
+                    "FF/SI": "4-Seamer / Sinker",
+                    "FF/SL": "4-Seamer / Slider",
+                    "CH/FF": "Changeup / 4-Seamer",
+                    "CH/CU": "Changeup / Curveball",
+                    "CH/FC": "Changeup / Cutter",
+                    "CH/SI": "Changeup / Sinker",
+                    "CH/SL": "Changeup / Slider",
+                    "CU/FF": "Curveball / 4-Seamer",
+                    "CU/CH": "Curveball / Changeup",
+                    "CU/FC": "Curveball / Cutter",
+                    "CU/SI": "Curveball / Sinker",
+                    "CU/SL": "Curveball / Slider",
+                    "FC/FF": "Cutter / 4-Seamer",
+                    "FC/CH": "Cutter / Changeup",
+                    "FC/CU": "Cutter / Curveball",
+                    "FC/SI": "Cutter / Sinker",
+                    "FC/SL": "Cutter / Slider",
+                    "SI/FF": "Sinker / 4-Seamer",
+                    "SI/CH": "Sinker / Changeup",
+                    "SI/CU": "Sinker / Curveball",
+                    "SI/FC": "Sinker / Cutter",
+                    "SI/SL": "Sinker / Slider",
+                    "SL/FF": "Slider / 4-Seamer",
+                    "SL/CH": "Slider / Changeup",
+                    "SL/CU": "Slider / Curveball",
+                    "SL/FC": "Slider / Cutter",
+                    "SL/SI": "Slider / Sinker"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "100",
+                    "1": "1",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "125": "125",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "350": "350",
+                    "450": "450",
+                    "500": "500",
+                    "600": "600"
+                },
+                "field_type": "single-select"
+            },
+            "pov": {
+                "name": "pov",
+                "slug": "pov",
+                "choices": {
+                    "default": "Pit",
+                    "pitcher": "Pit",
+                    "batter": "Bat"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "spin_direction": {
+        "name": "spin_direction",
+        "slug": "spin-direction-pitches",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "all years": "ALL"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "pitch_type": {
+                "name": "pitch_type",
+                "slug": "pitch_type",
+                "choices": {
+                    "default": "FF",
+                    "4-seamer": "FF",
+                    "sinker": "SI",
+                    "changeup": "CH",
+                    "curveball": "CU",
+                    "cutter": "FC",
+                    "splitter": "FS",
+                    "slider": "SL",
+                    "all pitches": "ALL"
+                },
+                "field_type": "single-select"
+            },
+            "handedness": {
+                "name": "handedness",
+                "slug": "hand",
+                "choices": {
+                    "rhp": "R",
+                    "lhp": "L"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "100",
+                    "1": "1",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "125": "125",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "350": "350",
+                    "450": "450",
+                    "500": "500",
+                    "600": "600"
+                },
+                "field_type": "single-select"
+            },
+            "pov": {
+                "name": "pov",
+                "slug": "pov",
+                "choices": {
+                    "default": "Pit",
+                    "pitcher": "Pit",
+                    "batter": "Bat"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "oaa": {
+        "name": "oaa",
+        "slug": "outs_above_average",
+        "fields": {
+            "player_type": {
+                "name": "player_type",
+                "slug": "type",
+                "choices": {
+                    "default": "Fielder",
+                    "fielder": "Fielder",
+                    "team fielding": "Fielding_Team",
+                    "batter": "Batter",
+                    "team batting": "Batting_Team",
+                    "pitcher": "Pitcher"
+                },
+                "field_type": "single-select"
+            },
+            "visual": {
+                "name": "visual",
+                "slug": "viz",
+                "choices": {
+                    "default": "show",
+                    "show": "show",
+                    "hide": "hide"
+                },
+                "field_type": "single-select"
+            },
+            "min_attempts": {
+                "name": "min_attempts",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250"
+                },
+                "field_type": "single-select"
+            },
+            "position": {
+                "name": "position",
+                "slug": "pos",
+                "choices": {
+                    "infield": "if",
+                    "outfield": "of",
+                    "1b": "3",
+                    "2b": "4",
+                    "3b": "5",
+                    "ss": "6",
+                    "lf": "7",
+                    "cf": "8",
+                    "rf": "9"
+                },
+                "field_type": "single-select"
+            },
+            "roles": {
+                "name": "roles",
+                "slug": "roles",
+                "choices": {
+                    "1b close to line": "32",
+                    "1b straight up": "30",
+                    "1b toward hole": "31",
+                    "2b behind first": "43",
+                    "2b toward hole": "42",
+                    "2b straight up": "40",
+                    "2b toward bag": "41",
+                    "2b up the middle": "46",
+                    "3b close to line": "51",
+                    "3b straight up": "50",
+                    "3b toward hole": "52",
+                    "ss up the middle": "64",
+                    "ss toward bag": "62",
+                    "ss straight up": "60",
+                    "ss toward hole": "61",
+                    "lf close to line": "77",
+                    "lf leaning left": "71",
+                    "lf straight up": "70",
+                    "lf leaning right": "72",
+                    "lf in lf gap": "78",
+                    "cf in lf gap": "87",
+                    "cf leaning left": "81",
+                    "cf leaning right": "82",
+                    "cf in rf gap": "89",
+                    "rf in rf gap": "98",
+                    "rf leaning left": "91",
+                    "rf straight up": "90",
+                    "rf leaning right": "92",
+                    "rf close to line": "99"
+                },
+                "delimiter": ",",
+                "add_trailing_delimiter": false,
+                "field_type": "multi-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "time_range": {
+                "name": "time_range",
+                "slug": "range",
+                "choices": {
+                    "default": "year",
+                    "year": "year",
+                    "march/april": "4",
+                    "may": "5",
+                    "june": "6",
+                    "july": "7",
+                    "august": "8",
+                    "september": "9"
+                },
+                "field_type": "single-select"
+            },
+            "start_season": {
+                "name": "start_season",
+                "slug": "startYear",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016"
+                },
+                "field_type": "single-select"
+            },
+            "end_season": {
+                "name": "end_season",
+                "slug": "endYear",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016"
+                },
+                "field_type": "single-select"
+            },
+            "split_seasons": {
+                "name": "split_seasons",
+                "slug": "split",
+                "choices": {
+                    "default": "no",
+                    "no": "no",
+                    "yes": "yes"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "of_directional_oaa": {
+        "name": "of_directional_oaa",
+        "slug": "outfield_directional_outs_above_average",
+        "fields": {
+            "min_opportunities": {
+                "name": "min_opportunities",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "0": "0",
+                    "5": "5",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "all years": "ALL"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "of_catch_probability": {
+        "name": "of_catch_probability",
+        "slug": "catch_probability",
+        "fields": {
+            "type": {
+                "name": "type",
+                "slug": "type",
+                "choices": {
+                    "default": "player",
+                    "player": "player",
+                    "team": "team"
+                },
+                "field_type": "single-select"
+            },
+            "min_opportunities": {
+                "name": "min_opportunities",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "0": "0",
+                    "5": "5",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250"
+                },
+                "field_type": "single-select"
+            },
+            "play_type": {
+                "name": "play_type",
+                "slug": "total",
+                "choices": {
+                    "default": "5",
+                    "all plays": "5",
+                    "2+ star plays": "4",
+                    "3+ star plays": "3",
+                    "4+ star plays": "2"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "all years": "ALL"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "outfield_jump": {
+        "name": "outfield_jump",
+        "slug": "outfield_jump",
+        "fields": {
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016"
+                },
+                "field_type": "single-select"
+            },
+            "min_attempts": {
+                "name": "min_attempts",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "poptime": {
+        "name": "poptime",
+        "slug": "poptime",
+        "fields": {
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015"
+                },
+                "field_type": "single-select"
+            },
+            "min_attempts_2b": {
+                "name": "min_attempts_2b",
+                "slug": "min2b",
+                "choices": {
+                    "default": "5",
+                    "1": "1",
+                    "5": "5",
+                    "10": "10",
+                    "15": "15",
+                    "20": "20"
+                },
+                "field_type": "single-select"
+            },
+            "min_attempts_3b": {
+                "name": "min_attempts_3b",
+                "slug": "min3b",
+                "choices": {
+                    "default": "0",
+                    "0": "0",
+                    "1": "1",
+                    "5": "5",
+                    "10": "10",
+                    "15": "15",
+                    "20": "20"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "framing": {
+        "name": "framing",
+        "slug": "catcher_framing",
+        "fields": {
+            "player_type ": {
+                "name": "view: catcher ",
+                "slug": "type",
+                "choices": {
+                    "default": "catcher",
+                    "catcher": "catcher",
+                    "pitcher": "pitcher",
+                    "batter": "batter",
+                    "team fielding": "fielding_team",
+                    "team batting": "batting_team"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "all years": "0"
+                },
+                "field_type": "single-select"
+            },
+            "min_pitches": {
+                "name": "min_pitches",
+                "slug": "min",
+                "choices": {
+                    "default": "q",
+                    "qualified": "q",
+                    "100": "100",
+                    "250": "250",
+                    "500": "500",
+                    "750": "750",
+                    "1000": "1000",
+                    "1250": "1250",
+                    "1500": "1500"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "arm_strength": {
+        "name": "arm_strength",
+        "slug": "arm-strength",
+        "fields": {
+            "position": {
+                "name": "position",
+                "slug": "pos",
+                "choices": {
+                    "2b/ss/3b": "arm_inf",
+                    "of": "arm_of",
+                    "1b": "arm_1b",
+                    "2b": "arm_2b",
+                    "ss": "arm_ss",
+                    "3b": "arm_3b",
+                    "lf": "arm_lf",
+                    "cf": "arm_cf",
+                    "rf": "arm_rf"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "all years": "9999"
+                },
+                "field_type": "single-select"
+            },
+            "min_throws": {
+                "name": "min_throws",
+                "slug": "minThrows",
+                "choices": {
+                    "default": "100",
+                    "50": "50",
+                    "100": "100",
+                    "300": "300",
+                    "500": "500",
+                    "1000": "1000"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "sprint_speed": {
+        "name": "sprint_speed",
+        "slug": "sprint_speed",
+        "fields": {
+            "position": {
+                "name": "position",
+                "slug": "position",
+                "choices": {
+                    "all": "all",
+                    "c": "2",
+                    "1b": "3",
+                    "2b": "4",
+                    "ss": "6",
+                    "3b": "5",
+                    "lf": "7",
+                    "cf": "8",
+                    "rf": "9",
+                    "dh": "10",
+                    "p": "1"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "start_season": {
+                "name": "start_season",
+                "slug": "min_season",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015"
+                },
+                "field_type": "single-select"
+            },
+            "end_season": {
+                "name": "end_season",
+                "slug": "max_season",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015"
+                },
+                "field_type": "single-select"
+            },
+            "min_opportunities": {
+                "name": "min_opportunities",
+                "slug": "min",
+                "choices": {
+                    "default": "10",
+                    "0": "0",
+                    "5": "5",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "running_splits": {
+        "name": "running_splits",
+        "slug": "running_splits",
+        "fields": {
+            "position": {
+                "name": "position",
+                "slug": "position",
+                "choices": {
+                    "c": "2",
+                    "1b": "3",
+                    "2b": "4",
+                    "ss": "6",
+                    "3b": "5",
+                    "lf": "7",
+                    "cf": "8",
+                    "rf": "9",
+                    "dh": "10"
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "team",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "guardians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "all years": "ALL"
+                },
+                "field_type": "single-select"
+            },
+            "bat_side": {
+                "name": "bat_side",
+                "slug": "bats",
+                "choices": {
+                    "rhb": "R",
+                    "lhb": "L"
+                },
+                "field_type": "single-select"
+            },
+            "min_opportunities": {
+                "name": "min_opportunities",
+                "slug": "min",
+                "choices": {
+                    "default": "5",
+                    "0": "0",
+                    "5": "5",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "75": "75",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250"
+                },
+                "field_type": "single-select"
+            },
+            "type": {
+                "name": "type",
+                "slug": "type",
+                "choices": {
+                    "default": "raw",
+                    "raw split times": "raw",
+                    "percentile rankings": "percent"
+                },
+                "field_type": "single-select"
+            }
+        }
+    },
+    "park_factors": {
+        "name": "park_factors",
+        "slug": "statcast-park-factors",
+        "fields": {
+            "factor_type": {
+                "name": "factor_type",
+                "slug": "type",
+                "choices": {
+                    "default": "year",
+                    "year": "year",
+                    "venue": "venue",
+                    "distance": "distance",
+                    "distance all years": "distance-all",
+                    "raw counts": "raw"
+                },
+                "field_type": "single-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "year",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "2014": "2014",
+                    "2013": "2013",
+                    "2012": "2012",
+                    "2011": "2011",
+                    "2010": "2010",
+                    "2009": "2009",
+                    "2008": "2008",
+                    "2007": "2007",
+                    "2006": "2006",
+                    "2005": "2005",
+                    "2004": "2004",
+                    "2003": "2003",
+                    "2002": "2002",
+                    "2001": "2001",
+                    "2000": "2000",
+                    "1999": "1999"
+                },
+                "field_type": "single-select"
+            },
+            "bat_side": {
+                "name": "bat_side",
+                "slug": "batside",
+                "choices": {
+                    "r": "R",
+                    "l": "L"
+                },
+                "field_type": "single-select"
+            },
+            "condition": {
+                "name": "condition",
+                "slug": "condition",
+                "choices": {
+                    "default": "All",
+                    "all": "All",
+                    "day": "Day",
+                    "night": "Night",
+                    "roof closed": "Roof Closed",
+                    "open air": "Open Air"
+                },
+                "field_type": "single-select"
+            },
+            "three_year_rolling": {
+                "name": "three_year_rolling",
+                "slug": "roll",
+                "choices": {
+                    "no": "no"
+                },
+                "field_type": "single-select"
+            },
+            "stat": {
+                "name": "stat",
+                "slug": "stat",
+                "choices": {
+                    "default": "index_wOBA",
+                    "woba": "index_wOBA",
+                    "wobacon": "index_wOBAcon",
+                    "xwobacon": "index_xwOBAcon",
+                    "bacon": "index_BACON",
+                    "xbacon": "index_xBAcon",
+                    "hard hit": "index_hardhit",
+                    "runs": "index_runs",
+                    "obp": "index_OBP",
+                    "hits": "index_Hits",
+                    "1b": "index_1B",
+                    "2b": "index_2B",
+                    "3b": "index_3B",
+                    "hr": "index_HR",
+                    "bb": "index_BB",
+                    "so": "index_SO"
+                },
+                "field_type": "single-select"
+            }
+        }
+    }
+}
