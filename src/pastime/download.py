@@ -12,7 +12,6 @@ def download_csv(url: str, output: IO, progress_bar: Progress, **kwargs):
     )
 
     with closing(requests.get(url=url, timeout=180, stream=True, **kwargs)) as response:
-        print(response.headers)
         total_length = int(response.headers["Content-Length"])
 
         progress_bar.update(task_id, total=total_length)
