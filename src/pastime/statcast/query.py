@@ -97,6 +97,8 @@ DEPRECATED_COLUMNS = [
     "tfs_deprecated",
     "tfs_zulu_deprecated",
     "umpire",
+    "pitcher_duplicated_0",
+    "fielder_2_duplicated_0",
 ]
 
 
