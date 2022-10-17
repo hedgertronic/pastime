@@ -4,7 +4,7 @@ from typing import cast
 import pkg_resources
 import polars as pl
 
-from pastime.download import download_csv, PROGRESS_BAR
+from pastime.download import PROGRESS_BAR, download_csv
 
 
 LOOKUP_URL = (
@@ -45,9 +45,20 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
             subset=columns[2:]
         )
 
-        # TODO: Fix when missing first name
+        first_name = (
+            pl.when(pl.col("name_first").is_null())
+            .then("")
+            .otherwise(pl.col("name_first"))
+        )
+
+        last_name = (
+            pl.when(pl.col("name_last").is_null())
+            .then("")
+            .otherwise(pl.col("name_last"))
+        )
+
         lookup_table = lookup_table.with_column(
-            (pl.col("name_first") + " " + pl.col("name_last")).alias("name_full")
+            (first_name + " " + last_name).alias("name_full")
         )
 
         lookup_table = lookup_table[list(LOOKUP_COLUMNS)]
