@@ -5,7 +5,7 @@ import requests
 from rich import progress
 
 
-progress_bar = progress.Progress(
+PROGRESS_BAR = progress.Progress(
     "[progress.percentage]{task.percentage:>3.1f}%",
     progress.BarColumn(),
     "•",

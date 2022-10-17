@@ -10,7 +10,7 @@ import pkg_resources
 import polars as pl
 from rich.console import Console
 
-from pastime.download import download_csv, progress_bar
+from pastime.download import download_csv, PROGRESS_BAR
 from pastime.statcast.field import (
     Field,
     Leaderboard,
@@ -198,13 +198,13 @@ class SearchQuery:
 
         output = io.StringIO()
 
-        with progress_bar, ThreadPoolExecutor() as pool:
+        with PROGRESS_BAR, ThreadPoolExecutor() as pool:
             for request in self.requests_to_make:
                 pool.submit(
                     download_csv,
                     SEARCH_URL,
                     output,
-                    progress_bar,
+                    PROGRESS_BAR,
                     params=request,
                     **kwargs,
                 )
@@ -395,11 +395,11 @@ class LeaderboardQuery:
     def request(self, **kwargs) -> pl.DataFrame:
         output = io.StringIO()
 
-        with progress_bar:
+        with PROGRESS_BAR:
             download_csv(
                 f"{LEADERBOARD_URL}/{self.leaderboard.slug}",
                 output,
-                progress_bar,
+                PROGRESS_BAR,
                 params=self.params,
                 **kwargs,
             )

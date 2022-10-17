@@ -4,7 +4,7 @@ from typing import cast
 import pkg_resources
 import polars as pl
 
-from pastime.download import download_csv, progress_bar
+from pastime.download import download_csv, PROGRESS_BAR
 
 
 LOOKUP_URL = (
@@ -30,11 +30,11 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
     if not pkg_resources.resource_exists(__name__, "data/lookup_table.csv") or refresh:
         output = io.StringIO()
 
-        with progress_bar:
+        with PROGRESS_BAR:
             download_csv(
                 LOOKUP_URL,
                 output,
-                progress_bar,
+                PROGRESS_BAR,
                 headers={"Accept-Encoding": "identity"},
             )
 
