@@ -46,28 +46,34 @@ class Field:
 
 class SingleSelectField(Field):
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        values = self.validate_values(values)
-
-        if not values:
-            param: str = ""
-
-        elif values.lower() in self.choices:
-            param = self.choices[values.lower()]
-
-        elif values in self.choices.values():
-            param = values
-
-        else:
-            close_matches = get_close_matches(values, self.choices.keys())
-
-            raise ValueError(
-                f"Invalid value provided: {values} for {self.name}."
-                f" Did you mean {', '.join(close_matches)}?"
-                if close_matches
-                else f"Invalid value provided: {values} for field {self.name}."
-            )
+        value = self.validate_values(values)
+        param = self._get_param(value)
 
         return {self.slug: [param.replace(".", r"\.")]}
+
+    def _get_param(self, value: str) -> str:
+        param = ""
+
+        if not value:
+            pass
+
+        elif value.lower() in self.choices:
+            param = self.choices[value.lower()]
+
+        elif value in self.choices.values():
+            param = value
+
+        else:
+            close_matches = get_close_matches(value, self.choices.keys())
+
+            raise ValueError(
+                f"Invalid value provided: {value} for {self.name}."
+                f" Did you mean {', '.join(close_matches)}?"
+                if close_matches
+                else f"Invalid value provided: {value} for field {self.name}."
+            )
+
+        return param
 
     def get_values(self, params: dict[str, list[str]]) -> str:
         return params[self.slug][0].replace(r"\.", ".")
@@ -96,35 +102,12 @@ class SingleSelectField(Field):
 
 class MultiSelectField(Field):
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        if not values:
-            return {self.slug: [""]}
-
-        values = self.validate_values(values)
+        valid_values = self.validate_values(values)
 
         params: set[str] = set()
 
-        for value in values:
-            if not value:
-                continue
-
-            if value.lower() in self.choices:
-                params.add(self.choices[value])
-
-            elif value.lower() in self.aliases:
-                params |= set(self.aliases[value])
-
-            elif value in self.choices.values():
-                params.add(value)
-
-            else:
-                close_matches = get_close_matches(value, self.choices.keys())
-
-                raise ValueError(
-                    f"Invalid value provided: '{value}' for '{self.name}'."
-                    f" Did you mean {', '.join(close_matches)}?"
-                    if close_matches
-                    else f"Invalid value provided: '{value}' for field '{self.name}'."
-                )
+        for value in valid_values:
+            params |= self._get_param(value)
 
         param_list = [param.replace(".", r"\.") for param in sorted(params)]
 
@@ -134,6 +117,33 @@ class MultiSelectField(Field):
                 f"{self.delimiter if self.add_trailing_delimiter else ''}"
             ]
         }
+
+    def _get_param(self, value: str) -> set[str]:
+        params = set()
+
+        if not value:
+            pass
+
+        elif value.lower() in self.choices:
+            params.add(self.choices[value])
+
+        elif value.lower() in self.aliases:
+            params |= set(self.aliases[value])
+
+        elif value in self.choices.values():
+            params.add(value)
+
+        else:
+            close_matches = get_close_matches(value, self.choices.keys())
+
+            raise ValueError(
+                f"Invalid value provided: '{value}' for '{self.name}'."
+                f" Did you mean {', '.join(close_matches)}?"
+                if close_matches
+                else f"Invalid value provided: '{value}' for field '{self.name}'."
+            )
+
+        return params
 
     def get_values(self, params: dict[str, list[str]]) -> list[str]:
         return params[self.slug][0].replace(r"\.", ".").split("|")[:-1]
@@ -242,8 +252,8 @@ class MetricRangeField(Field):
     def get_params(self, values: Param) -> dict[str, list[str]]:
         values = self.validate_values(values)
 
-        range_min = self.min_value or np.NINF
-        range_max = self.max_value or np.Inf
+        range_min = self.min_value if self.min_value is not None else np.NINF
+        range_max = self.max_value if self.max_value is not None else np.Inf
 
         min_value, max_value = self._get_range_extremes(values, range_min, range_max)
 
@@ -268,7 +278,7 @@ class MetricRangeField(Field):
         return "", ""
 
     def validate_values(self, values: Param) -> tuple[float | None, float | None]:
-        if not values:
+        if not values and values != 0:
             values = [None, None]
 
         elif isinstance(values, str) or not isinstance(values, Sequence):
@@ -282,12 +292,16 @@ class MetricRangeField(Field):
             raise ValueError("Invalid metric range format provided.")
 
         return (
-            self._validate_metric_value(values[0] or None),
-            self._validate_metric_value(values[1] or None),
+            self._validate_metric_value(
+                values[0] if values[0] or values[0] == 0 else None
+            ),
+            self._validate_metric_value(
+                values[1] if values[1] or values[1] == 0 else None
+            ),
         )
 
     def _validate_metric_value(self, value: ParamComponent) -> float | None:
-        if not value:
+        if not value and value != 0:
             value = None
 
         elif isinstance(value, date):
@@ -337,7 +351,7 @@ class Leaderboard:
             field_obj = self.fields.get(field_name)
 
             if not field_obj:
-                raise ValueError(f"Invalid leaderboard name: {field_name}.")
+                raise ValueError(f"Invalid field name: {field_name}.")
 
             params |= field_obj.get_params(value)
 

@@ -1076,32 +1076,44 @@
     "exit_velocity": {
         "name": "exit_velocity",
         "slug": "h_launch_speed",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 124
     },
     "pitch_velocity": {
         "name": "pitch_velocity",
         "slug": "api_p_release_speed",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 110
     },
     "launch_angle": {
         "name": "launch_angle",
         "slug": "h_launch_angle",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": -90,
+        "max_value": 90
     },
     "launch_direction": {
         "name": "launch_direction",
         "slug": "h_launch_direction",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": -90,
+        "max_value": 90
     },
     "launch_direction_pull_opp": {
         "name": "launch_direction_pull_opp",
         "slug": "h_launch_direction_pullopp",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": -90,
+        "max_value": 90
     },
     "distance_projected": {
         "name": "distance_projected",
         "slug": "api_h_distance_projected",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 550
     },
     "release_extension": {
         "name": "release_extension",
@@ -1116,17 +1128,23 @@
     "lineup_position": {
         "name": "lineup_position",
         "slug": "lineup_cd",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 1,
+        "max_value": 9
     },
     "perceived_speed": {
         "name": "perceived_speed",
         "slug": "api_p_effective_speed",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 110
     },
     "plate_speed": {
         "name": "plate_speed",
         "slug": "api_p_plate_speed",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 110
     },
     "release_position_x": {
         "name": "release_position_x",
@@ -1171,32 +1189,44 @@
     "home_score": {
         "name": "home_score",
         "slug": "home_score",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 25
     },
     "away_score": {
         "name": "away_score",
         "slug": "away_score",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 25
     },
     "home_score_diff": {
         "name": "home_score_diff",
         "slug": "home_score_diff",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": -25,
+        "max_value": 25
     },
     "bat_score": {
         "name": "bat_score",
         "slug": "bat_score",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 25
     },
     "field_score": {
         "name": "field_score",
         "slug": "fld_score",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 0,
+        "max_value": 25
     },
     "bat_score_diff": {
         "name": "bat_score_diff",
         "slug": "bat_score_diff",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": -25,
+        "max_value": 25
     },
     "home_win_exp": {
         "name": "home_win_exp",
@@ -1211,12 +1241,16 @@
     "pitcher_times_through_order": {
         "name": "pitcher_times_through_order",
         "slug": "n_thruorder_pitcher",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 1,
+        "max_value": 10
     },
     "batter_times_through_order": {
         "name": "batter_times_through_order",
         "slug": "n_priorpa_thisgame_player_at_bat",
-        "field_type": "metric-range"
+        "field_type": "metric-range",
+        "min_value": 1,
+        "max_value": 10
     },
     "game_pk": {
         "name": "game_pk",
