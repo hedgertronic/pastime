@@ -3,9 +3,8 @@ from typing import cast
 
 import pkg_resources
 import polars as pl
-from rich import progress as pr
 
-from pastime.download import download_csv
+from pastime.download import download_csv, progress_bar
 
 
 LOOKUP_URL = (
@@ -31,23 +30,12 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
     if not pkg_resources.resource_exists(__name__, "data/lookup_table.csv") or refresh:
         output = io.StringIO()
 
-        progress_bar = pr.Progress(
-            "[progress.percentage]{task.percentage:>3.1f}%",
-            pr.BarColumn(),
-            "•",
-            pr.DownloadColumn(),
-            "•",
-            pr.TransferSpeedColumn(),
-            "•",
-            pr.TimeRemainingColumn(compact=True, elapsed_when_finished=True),
-        )
-
         with progress_bar:
             download_csv(
                 LOOKUP_URL,
                 output,
                 progress_bar,
-                # headers={"Accept-Encoding": "identity"},
+                headers={"Accept-Encoding": "identity"},
             )
 
         columns = list(LOOKUP_COLUMNS)

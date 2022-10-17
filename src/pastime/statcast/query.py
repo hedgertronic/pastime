@@ -8,10 +8,9 @@ from typing import Any, cast
 
 import pkg_resources
 import polars as pl
-from rich import progress as pr
 from rich.console import Console
 
-from pastime.download import download_csv
+from pastime.download import download_csv, progress_bar
 from pastime.statcast.field import (
     Field,
     Leaderboard,
@@ -45,7 +44,7 @@ LEADERBOARD_FIELDS: dict[str, Leaderboard] = {
 
 
 DEFAULT_SEARCH_PARAMS: dict[str, list[str]] = {}
-DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
+# DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
 
 
 for _field in SEARCH_FIELDS.values():
@@ -56,17 +55,17 @@ for _field in SEARCH_FIELDS.values():
         DEFAULT_SEARCH_PARAMS |= {_field.name: [""]}
 
 
-for _leaderboard in LEADERBOARD_FIELDS.values():
-    _default_params: dict[str, list[str]] = {}
+# for _leaderboard in LEADERBOARD_FIELDS.values():
+#     _default_params: dict[str, list[str]] = {}
 
-    for _field in _leaderboard.fields.values():
-        if _default_choice := cast(str, _field.choices.get("default")):
-            _default_params |= _field.get_params(_default_choice)
+#     for _field in _leaderboard.fields.values():
+#         if _default_choice := cast(str, _field.choices.get("default")):
+#             _default_params |= _field.get_params(_default_choice)
 
-        elif _field.field_type != "metric-range":
-            _default_params |= {_field.slug: [""]}
+#         elif _field.field_type != "metric-range":
+#             _default_params |= {_field.slug: [""]}
 
-    DEFAULT_LEADERBOARD_PARAMS[_leaderboard.name] = _default_params
+#     DEFAULT_LEADERBOARD_PARAMS[_leaderboard.name] = _default_params
 
 
 #######################################################################################
@@ -198,17 +197,6 @@ class SearchQuery:
         self._print_date_info()
 
         output = io.StringIO()
-
-        progress_bar = pr.Progress(
-            "[progress.percentage]{task.percentage:>3.1f}%",
-            pr.BarColumn(),
-            "•",
-            pr.DownloadColumn(),
-            "•",
-            pr.TransferSpeedColumn(),
-            "•",
-            pr.TimeElapsedColumn(),
-        )
 
         with progress_bar, ThreadPoolExecutor() as pool:
             for request in self.requests_to_make:
@@ -406,17 +394,6 @@ class LeaderboardQuery:
 
     def request(self, **kwargs) -> pl.DataFrame:
         output = io.StringIO()
-
-        progress_bar = pr.Progress(
-            "[progress.percentage]{task.percentage:>3.1f}%",
-            pr.BarColumn(),
-            "•",
-            pr.DownloadColumn(),
-            "•",
-            pr.TransferSpeedColumn(),
-            "•",
-            pr.TimeElapsedColumn(),
-        )
 
         with progress_bar:
             download_csv(

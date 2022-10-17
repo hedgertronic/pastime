@@ -2,10 +2,22 @@ from contextlib import closing
 from typing import IO
 
 import requests
-from rich.progress import Progress
+from rich import progress
 
 
-def download_csv(url: str, output: IO, progress_bar: Progress, **kwargs):
+progress_bar = progress.Progress(
+    "[progress.percentage]{task.percentage:>3.1f}%",
+    progress.BarColumn(),
+    "•",
+    progress.DownloadColumn(),
+    "•",
+    progress.TransferSpeedColumn(),
+    "•",
+    progress.TimeRemainingColumn(compact=True, elapsed_when_finished=True),
+)
+
+
+def download_csv(url: str, output: IO, progress_bar: progress.Progress, **kwargs):
     task_id = progress_bar.add_task(
         description="Making request...",
         total=None,
