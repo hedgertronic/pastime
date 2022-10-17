@@ -10,7 +10,8 @@ import pkg_resources
 import polars as pl
 from rich.console import Console
 
-from pastime.download import download_csv, PROGRESS_BAR
+from pastime.download import PROGRESS_BAR, download_csv
+from pastime.statcast.analysis import spin_columns
 from pastime.statcast.field import (
     Field,
     Leaderboard,
@@ -192,7 +193,7 @@ class SearchQuery:
             ),
         )
 
-    def request(self, **kwargs) -> pl.DataFrame:
+    def request(self, add_spin_columns: bool = False, **kwargs) -> pl.DataFrame:
         self._prepare_requests()
         self._print_date_info()
 
@@ -210,12 +211,14 @@ class SearchQuery:
                 )
                 time.sleep(1)
 
-        return (
+        data = (
             pl.read_csv(output, parse_dates=True, ignore_errors=True)
             .drop_nulls(subset="game_date")
             .drop(DEPRECATED_COLUMNS)
             .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
         )
+
+        return spin_columns(data) if add_spin_columns else data
 
     ####################################################################################
     # HELPER METHODS

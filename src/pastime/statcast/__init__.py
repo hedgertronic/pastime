@@ -1,1 +1,1 @@
-from pastime.statcast import leaderboard, search  # noqa
+from pastime.statcast import analysis, leaderboard, search  # noqa
