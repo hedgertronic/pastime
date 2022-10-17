@@ -2,8 +2,8 @@ from datetime import date
 
 import polars as pl
 
+from pastime.statcast.field import Param
 from pastime.statcast.query import SearchQuery
-from pastime.statcast.type_aliases import Param
 
 
 def season(year: Param, **kwargs: Param) -> pl.DataFrame:
