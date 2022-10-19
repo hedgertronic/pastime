@@ -112,7 +112,11 @@ ARSENAL_COLUMNS = [
 # PUBLIC FUNCTIONS
 
 # Ahem: "player_name" might not be pitcher but still want it to work.
+# TODO: If fields are null and assumed to be a certain type there are problems
 def pitcher_arsenal(data: pl.DataFrame) -> pl.DataFrame:
+    if data.is_empty():
+        return data
+
     # Removes intentional balls
     data = data.filter(pl.col("pitch_type") != "AB")
 
@@ -128,13 +132,16 @@ def pitcher_arsenal(data: pl.DataFrame) -> pl.DataFrame:
     )
 
     joined = joined.with_column(
-        _decimal_tilt_to_tilt(joined["decimal_tilt"].drop_nulls()).alias("tilt")
+        _decimal_tilt_to_tilt(joined["decimal_tilt"]).alias("tilt")
     )
 
     return joined[ARSENAL_COLUMNS]
 
 
 def spin_columns(data: pl.DataFrame) -> pl.DataFrame:
+    if data.is_empty():
+        return data
+
     spin = data[COMPUTATION_COLUMNS]
 
     spin = _compute_release_angle(spin)
@@ -142,11 +149,11 @@ def spin_columns(data: pl.DataFrame) -> pl.DataFrame:
 
     data = data.with_columns([spin["release_angle"], spin["bauer_units"]])
 
-    return nathan_fields(data)
+    return _nathan_fields(data)
 
 
-def nathan_fields(data: pl.DataFrame) -> pl.DataFrame:
-    nathan = data[COMPUTATION_COLUMNS].drop_nulls()
+def _nathan_fields(data: pl.DataFrame) -> pl.DataFrame:
+    nathan = data[COMPUTATION_COLUMNS]
 
     nathan = _compute_release_point_y(nathan)
     nathan = _compute_release_time(nathan)
@@ -193,7 +200,7 @@ def _compute_release_angle(data: pl.DataFrame) -> pl.DataFrame:
     release_pos_z = data["release_pos_z"]
 
     release_angle = np.degrees(
-        np.arctan2((release_pos_z - ECKERSLEY_LINE), abs(release_pos_x))
+        np.arctan2((release_pos_z + -ECKERSLEY_LINE), abs(release_pos_x))
     )
 
     return data.with_column(release_angle.alias("release_angle"))
