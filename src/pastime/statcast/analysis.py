@@ -130,11 +130,12 @@ def pitcher_arsenal(data: pl.DataFrame) -> pl.DataFrame:
         (pl.col("count") / pl.col("count").sum() * 100).alias("usage")
     )
 
-    joined = joined.with_column(
-        _decimal_tilt_to_tilt(joined["decimal_tilt"]).alias("tilt")
-    )
+    if "decimal_tilt" in joined:
+        joined = joined.with_column(
+            _decimal_tilt_to_tilt(joined["decimal_tilt"]).alias("tilt")
+        )
 
-    return joined[ARSENAL_COLUMNS]
+    return joined[[column for column in ARSENAL_COLUMNS if column in joined]]
 
 
 def spin_columns(data: pl.DataFrame) -> pl.DataFrame:
