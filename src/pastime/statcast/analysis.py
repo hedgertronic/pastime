@@ -112,7 +112,6 @@ ARSENAL_COLUMNS = [
 # PUBLIC FUNCTIONS
 
 # Ahem: "player_name" might not be pitcher but still want it to work.
-# TODO: If fields are null and assumed to be a certain type there are problems
 def pitcher_arsenal(data: pl.DataFrame) -> pl.DataFrame:
     if data.is_empty():
         return data
@@ -188,7 +187,7 @@ def _nathan_fields(data: pl.DataFrame) -> pl.DataFrame:
         ]
     )
 
-    return data
+    return data.fill_nan(None)
 
 
 #######################################################################################

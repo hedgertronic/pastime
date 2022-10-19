@@ -206,6 +206,7 @@ class SearchQuery:
             .drop_nulls(subset="game_date")
             .drop(DEPRECATED_COLUMNS)
             .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
+            .fill_nan(None)
         )
 
         return spin_columns(data) if add_spin_columns else data
@@ -392,4 +393,4 @@ class LeaderboardQuery:
             **kwargs,
         )
 
-        return pl.read_csv(output, parse_dates=True, ignore_errors=True)
+        return pl.read_csv(output, parse_dates=True, ignore_errors=True).fill_nan(None)
