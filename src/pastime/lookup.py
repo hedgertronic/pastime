@@ -12,7 +12,7 @@ LOOKUP_URL = (
 )
 
 
-LOOKUP_COLUMNS = (
+LOOKUP_COLUMNS = [
     "name_full",
     "name_last",
     "name_first",
@@ -23,7 +23,7 @@ LOOKUP_COLUMNS = (
     "key_fangraphs",
     "mlb_played_first",
     "mlb_played_last",
-)
+]
 
 
 def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
@@ -38,11 +38,15 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
             headers={"Accept-Encoding": "identity"},
         )
 
-        columns = list(LOOKUP_COLUMNS)
-        columns.pop(0)
+        lookup_table = pl.read_csv(output, columns=LOOKUP_COLUMNS[1:])
 
-        lookup_table = pl.read_csv(output, columns=columns).drop_nulls(
-            subset=columns[2:]
+        # Drops rows only if all values are null
+        lookup_table = lookup_table.filter(
+            ~pl.fold(
+                acc=True,
+                f=lambda acc, s: acc & s.is_null(),
+                exprs=pl.all(),
+            )
         )
 
         first_name = (
@@ -61,7 +65,7 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
             (first_name + " " + last_name).alias("name_full")
         )
 
-        lookup_table = lookup_table[list(LOOKUP_COLUMNS)]
+        lookup_table = lookup_table[LOOKUP_COLUMNS]
         lookup_table.write_csv("data/lookup_table.csv")
     else:
         stream = cast(
