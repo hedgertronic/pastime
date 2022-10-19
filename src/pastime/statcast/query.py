@@ -1,16 +1,13 @@
 import io
 import json
-import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 from difflib import get_close_matches
 from typing import Any, cast
 
 import pkg_resources
 import polars as pl
-from rich.console import Console
 
-from pastime.download import PROGRESS_BAR, download_csv
+from pastime.download import download_file, download_files
 from pastime.statcast.analysis import spin_columns
 from pastime.statcast.field import (
     Field,
@@ -19,9 +16,6 @@ from pastime.statcast.field import (
     Param,
     construct_fields,
 )
-
-
-console = Console()
 
 
 #######################################################################################
@@ -195,21 +189,17 @@ class SearchQuery:
 
     def request(self, add_spin_columns: bool = False, **kwargs) -> pl.DataFrame:
         self._prepare_requests()
-        self._print_date_info()
 
         output = io.StringIO()
 
-        with PROGRESS_BAR, ThreadPoolExecutor() as pool:
-            for request in self.requests_to_make:
-                pool.submit(
-                    download_csv,
-                    SEARCH_URL,
-                    output,
-                    PROGRESS_BAR,
-                    params=request,
-                    **kwargs,
-                )
-                time.sleep(1)
+        output = download_files(
+            url=SEARCH_URL,
+            output=output,
+            params=self.requests_to_make,
+            request_name="Statcast Search",
+            messages=self._get_messages(),
+            **kwargs,
+        )
 
         data = (
             pl.read_csv(output, parse_dates=True, ignore_errors=True)
@@ -304,14 +294,8 @@ class SearchQuery:
 
         return date_pairs
 
-    def _print_date_info(self) -> None:
-        console.rule("[bold blue]Statcast Search")
-
-        if len(self.requests_to_make) > 1:
-            console.print(
-                f"There are {len(self.requests_to_make)} requests to make."
-                " This may take a while.",
-            )
+    def _get_messages(self) -> list[str]:
+        messages = []
 
         start, end = cast(
             tuple[date | None, date | None],
@@ -319,21 +303,23 @@ class SearchQuery:
         )
 
         if start and start < date(2008, 1, 1):
-            console.print(
+            messages.append(
                 "Statcast data is only available from the 2008 season onwards."
             )
 
         if start and start < date(2015, 1, 1):
-            console.print(
+            messages.append(
                 "Some metrics such as 'exit velocity' and 'batted ball events'"
                 " are not available before 2015."
             )
 
         if end and end >= date.today():
-            console.print(
+            messages.append(
                 "Data is updated every day at 3 am."
                 " Some of today's data may be missing."
             )
+
+        return messages
 
 
 class LeaderboardQuery:
@@ -398,13 +384,12 @@ class LeaderboardQuery:
     def request(self, **kwargs) -> pl.DataFrame:
         output = io.StringIO()
 
-        with PROGRESS_BAR:
-            download_csv(
-                f"{LEADERBOARD_URL}/{self.leaderboard.slug}",
-                output,
-                PROGRESS_BAR,
-                params=self.params,
-                **kwargs,
-            )
+        output = download_file(
+            url=f"{LEADERBOARD_URL}/{self.leaderboard.slug}",
+            output=output,
+            params=self.params,
+            request_name="Statcast Leaderboard",
+            **kwargs,
+        )
 
         return pl.read_csv(output, parse_dates=True, ignore_errors=True)
