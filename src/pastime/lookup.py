@@ -7,6 +7,10 @@ import polars as pl
 from pastime.download import download_file
 
 
+#######################################################################################
+# LOOKUP DATA
+
+
 LOOKUP_URL = (
     "https://raw.githubusercontent.com/chadwickbureau/register/master/data/people.csv"
 )
@@ -14,8 +18,8 @@ LOOKUP_URL = (
 
 LOOKUP_COLUMNS = [
     "name_full",
-    "name_last",
     "name_first",
+    "name_last",
     "key_mlbam",
     "key_retro",
     "key_bbref",
@@ -26,8 +30,41 @@ LOOKUP_COLUMNS = [
 ]
 
 
-def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
-    if not pkg_resources.resource_exists(__name__, "data/lookup_table.csv") or refresh:
+#######################################################################################
+# LOOKUP EXCEPTIONS
+
+
+class NameNotFoundError(ValueError):
+    def __init__(self, player_name: str):
+        message = (
+            f"'{player_name}'."
+            " If you think the lookup table may be out of date, you can refresh it by"
+            " including 'refresh=True' in your function call."
+        )
+
+        super().__init__(message)
+
+
+class IdNotFoundError(ValueError):
+    def __init__(self, player_id: str | int):
+        message = (
+            f"'{player_id}'."
+            " If you think the lookup table may be out of date, you can refresh it by"
+            " including 'refresh=True' in your function call."
+        )
+
+        super().__init__(message)
+
+
+#######################################################################################
+# LOOKUP METHODS
+
+
+def get_lookup_table(refresh_table: bool = False) -> pl.DataFrame:
+    if (
+        not pkg_resources.resource_exists(__name__, "data/lookup_table.csv")
+        or refresh_table
+    ):
         output = io.StringIO()
 
         output = download_file(
@@ -78,8 +115,8 @@ def get_lookup_table(refresh: bool = False) -> pl.DataFrame:
     return lookup_table
 
 
-def lookup_id(player_id: int | str, *, refresh: bool = False) -> pl.DataFrame:
-    data = get_lookup_table(refresh=refresh).filter(
+def lookup_id(player_id: int | str, *, refresh_table: bool = False) -> pl.DataFrame:
+    data = get_lookup_table(refresh_table=refresh_table).filter(
         (pl.col("key_mlbam").cast(str) == str(player_id))
         | (pl.col("key_fangraphs").cast(str) == str(player_id))
         | (pl.col("key_bbref").cast(str) == str(player_id))
@@ -87,11 +124,7 @@ def lookup_id(player_id: int | str, *, refresh: bool = False) -> pl.DataFrame:
     )
 
     if data.is_empty():
-        raise ValueError(
-            f"Invalid player id: '{player_id}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
+        raise IdNotFoundError(player_id)
 
     return data
 
@@ -99,9 +132,9 @@ def lookup_id(player_id: int | str, *, refresh: bool = False) -> pl.DataFrame:
 def lookup_name(
     name: str = "",
     *,
-    refresh: bool = False,
+    refresh_table: bool = False,
 ) -> pl.DataFrame:
-    lookup_table = get_lookup_table(refresh=refresh)
+    lookup_table = get_lookup_table(refresh_table=refresh_table)
 
     name = name.strip().lower()
 
@@ -112,35 +145,31 @@ def lookup_name(
     )
 
     if data.is_empty():
-        raise ValueError(
-            f"Invalid player name: '{name}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
+        raise NameNotFoundError(name)
 
     return data
 
 
-def get_name(player_id: int | str, *, refresh: bool = False) -> str:
-    table = lookup_id(player_id, refresh=refresh)
+def get_name(player_id: int | str, *, refresh_table: bool = False) -> str:
+    table = lookup_id(player_id, refresh_table=refresh_table)
 
     if table.is_empty():
-        raise ValueError(
-            f"Invalid player id: '{player_id}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
+        raise IdNotFoundError(player_id)
 
     return table["name_full"][0]
 
 
 def get_id(
-    name: str, source: str = "mlbam", start_year: str = None, *, refresh: bool = False
+    name: str,
+    source: str = "mlbam",
+    start_year: str = None,
+    *,
+    refresh_table: bool = False,
 ) -> int:
     if source not in ["mlbam", "fangraphs", "bbref", "retro"]:
         raise ValueError(f"Invalid source: '{source}'")
 
-    table = lookup_name(name, refresh=refresh)
+    table = lookup_name(name, refresh_table=refresh_table)
 
     if len(table) > 1 and start_year:
         table = table.filter(pl.col("mlb_played_first") == start_year)
@@ -149,10 +178,6 @@ def get_id(
         table = table.sort("mlb_played_first")[-1]
 
     if table.is_empty():
-        raise ValueError(
-            f"Invalid player name: '{name}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
+        raise NameNotFoundError(name)
 
     return table[f"key_{source}"][0]

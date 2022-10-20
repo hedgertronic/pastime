@@ -1,14 +1,14 @@
 import io
 import json
 from datetime import date, timedelta
-from difflib import get_close_matches
 from typing import Any, cast
 
 import pkg_resources
 import polars as pl
 
 from pastime.download import download_file, download_files
-from pastime.statcast.analysis import spin_columns
+from pastime.statcast.analysis import compute_spin_columns
+from pastime.statcast.exceptions import FieldNameError, InvalidSubgroupError
 from pastime.statcast.field import (
     Field,
     Leaderboard,
@@ -19,7 +19,7 @@ from pastime.statcast.field import (
 
 
 #######################################################################################
-# FIELD DATA
+# STATCAST FIELD DATA
 
 
 _search_field_data: dict[str, dict[str, Any]] = json.load(
@@ -64,7 +64,7 @@ for _field in SEARCH_FIELDS.values():
 
 
 #######################################################################################
-# CONSTANTS FOR SPLITTING REQUESTS
+# CONSTANTS FOR REQUEST SPLITTING
 
 
 MAX_ROWS_PER_REQUEST = 15_000
@@ -124,7 +124,7 @@ _SWING_TAKE_GROUPS = {
 
 
 #######################################################################################
-# URLS
+# QUERY URLS
 
 
 SEARCH_URL = "https://baseballsavant.mlb.com/statcast_search/csv?"
@@ -132,7 +132,7 @@ LEADERBOARD_URL = "https://baseballsavant.mlb.com/leaderboard"
 
 
 #######################################################################################
-# CLASSES
+# QUERY CLASSES
 
 
 class SearchQuery:
@@ -154,13 +154,8 @@ class SearchQuery:
             field = SEARCH_FIELDS.get(field_name)
 
             if not field:
-                close_matches = get_close_matches(field_name, SEARCH_FIELDS.keys())
-
-                raise ValueError(
-                    f"Invalid field name: {field_name}."
-                    f" Did you mean {', '.join(close_matches)}?"
-                    if close_matches
-                    else f"Invalid field name: {field_name}."
+                raise FieldNameError(
+                    field_name=field_name, valid_values=SEARCH_FIELDS.keys()
                 )
 
             self._add_param(field, field_values)
@@ -209,7 +204,7 @@ class SearchQuery:
             .fill_nan(None)
         )
 
-        return spin_columns(data) if add_spin_columns else data
+        return compute_spin_columns(data) if add_spin_columns else data
 
     ####################################################################################
     # HELPER METHODS
@@ -326,17 +321,14 @@ class SearchQuery:
 class LeaderboardQuery:
     ####################################################################################
     # PUBLIC METHODS
-    def __init__(self, name: str, **kwargs: Param):
-        leaderboard = LEADERBOARD_FIELDS.get(name)
+
+    def __init__(self, leaderboard_name: str, **kwargs: Param):
+        leaderboard = LEADERBOARD_FIELDS.get(leaderboard_name)
 
         if not leaderboard:
-            close_matches = get_close_matches(name, LEADERBOARD_FIELDS.keys())
-
-            raise ValueError(
-                f"Invalid leaderboard name: '{name}'."
-                f" Did you mean {', '.join(close_matches)}?"
-                if close_matches
-                else f"Invalid field name: '{name}'."
+            raise FieldNameError(
+                field_name=leaderboard_name,
+                valid_values=LEADERBOARD_FIELDS.keys(),
             )
 
         self.leaderboard = leaderboard
@@ -349,15 +341,8 @@ class LeaderboardQuery:
             field = self.leaderboard.fields.get(field_name)
 
             if not field:
-                close_matches = get_close_matches(
-                    field_name, self.leaderboard.fields.keys()
-                )
-
-                raise ValueError(
-                    f"Invalid field name: '{field_name}'."
-                    f" Did you mean {', '.join(close_matches)}?"
-                    if close_matches
-                    else f"Invalid field name: '{field_name}'."
+                raise FieldNameError(
+                    field_name=field_name, valid_values=SEARCH_FIELDS.keys()
                 )
 
             self.params |= field.get_params(field_values)
@@ -366,18 +351,12 @@ class LeaderboardQuery:
             group = self.params["type"][0]
             subgroup = self.params.get("sub_type", [""])[0]
 
-            if group == "All" and subgroup:
-                raise ValueError(
-                    f"Invalid value provided: '{subgroup}' for group 'All'."
-                    " When group is All, subgroup must be None."
-                )
-
-            if subgroup and subgroup.lower() not in _SWING_TAKE_GROUPS[group]:
-                raise ValueError(
-                    f"Invalid value provided: '{subgroup}'"
-                    f" for group '{group}'."
-                    f" Values for '{group}' must be in"
-                    f" {_SWING_TAKE_GROUPS[group]}"
+            if subgroup and subgroup.lower() not in _SWING_TAKE_GROUPS.get(group, [""]):
+                raise InvalidSubgroupError(
+                    group=group,
+                    subgroup=subgroup,
+                    leaderboard=self.leaderboard.name,
+                    valid_values=_SWING_TAKE_GROUPS.get(group, None),
                 )
 
         self.params["csv"] = ["true"]

@@ -2,12 +2,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from difflib import get_close_matches
-from typing import Any, Sequence, cast
+from typing import Any, Sequence
 
 import numpy as np
 
 from pastime.lookup import lookup_id
+from pastime.statcast.exceptions import (
+    FieldNameError,
+    FieldTypeError,
+    FieldValueError,
+    RangeValidationError,
+    TooManyValuesError,
+)
 
 
 ParamComponent = str | int | float | date | None
@@ -37,11 +43,7 @@ class Field:
         return values
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        return (
-            cast(float, self.frequencies.get("default", 1.0))
-            if params.get(self.slug)
-            else 1.0
-        )
+        return self.frequencies.get("default", 1.0) if params.get(self.slug) else 1.0
 
 
 class SingleSelectField(Field):
@@ -64,13 +66,8 @@ class SingleSelectField(Field):
             param = value
 
         else:
-            close_matches = get_close_matches(value, self.choices.keys())
-
-            raise ValueError(
-                f"Invalid value provided: {value} for {self.name}."
-                f" Did you mean {', '.join(close_matches)}?"
-                if close_matches
-                else f"Invalid value provided: {value} for field {self.name}."
+            raise FieldValueError(
+                value=value, field_name=self.name, valid_values=self.choices.keys()
             )
 
         return param
@@ -84,10 +81,7 @@ class SingleSelectField(Field):
             and isinstance(values, Sequence)
             and len(values) > 1
         ):
-            raise TypeError(
-                f"Too many values provided: field {self.name}"
-                " can only have one value."
-            )
+            raise TooManyValuesError(values=values, field_name=self.name, max_values=1)
 
         if not isinstance(values, str) and isinstance(values, Sequence):
             values = values[0]
@@ -95,9 +89,9 @@ class SingleSelectField(Field):
         return str(values) if values else ""
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        default_frequency = cast(float, self.frequencies.get("default", 1.0))
-
-        return self.frequencies.get(self.get_values(params), default_frequency)
+        return self.frequencies.get(
+            self.get_values(params), self.frequencies.get("default", 1.0)
+        )
 
 
 class MultiSelectField(Field):
@@ -134,13 +128,8 @@ class MultiSelectField(Field):
             params.add(value)
 
         else:
-            close_matches = get_close_matches(value, self.choices.keys())
-
-            raise ValueError(
-                f"Invalid value provided: '{value}' for '{self.name}'."
-                f" Did you mean {', '.join(close_matches)}?"
-                if close_matches
-                else f"Invalid value provided: '{value}' for field '{self.name}'."
+            raise FieldValueError(
+                value=value, field_name=self.name, valid_values=self.choices.keys()
             )
 
         return params
@@ -158,12 +147,11 @@ class MultiSelectField(Field):
         return [str(value) for value in values]
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        default_frequency = cast(float, self.frequencies.get("default", 1.0))
-
-        values = self.get_values(params)
+        default_frequency = self.frequencies.get("default", 1.0)
 
         frequency_sum = sum(
-            self.frequencies.get(value, default_frequency) for value in values
+            self.frequencies.get(value, default_frequency)
+            for value in self.get_values(params)
         )
 
         return frequency_sum if frequency_sum <= 1.0 else 1.0
@@ -198,7 +186,9 @@ class DateRangeField(Field):
         start, end = self.validate_values(values)
 
         if start and end and start > end:
-            raise ValueError(f"Start date greater than end date: {start} > {end}")
+            raise RangeValidationError(
+                min_value=str(start), max_value=str(end), field_name=self.name
+            )
 
         return {
             f"{self.slug}_gt": [str(start) if start else ""],
@@ -228,7 +218,7 @@ class DateRangeField(Field):
             values = [None, None]
 
         elif isinstance(values, Sequence) and len(values) > 2:
-            raise ValueError("Invalid date range format provided.")
+            raise TooManyValuesError(values=values, field_name=self.name, max_values=2)
 
         return (
             self._validate_date_value(values[0]) if values[0] else None,
@@ -243,7 +233,9 @@ class DateRangeField(Field):
             value = date.fromisoformat(value)
 
         elif isinstance(value, int | float):
-            raise TypeError("Invalid date range type provided.")
+            raise FieldTypeError(
+                value=value, field_name=self.name, valid_types=[str, date, type(None)]
+            )
 
         return value
 
@@ -289,7 +281,7 @@ class MetricRangeField(Field):
             values = [None, None]
 
         elif isinstance(values, Sequence) and len(values) > 2:
-            raise ValueError("Invalid metric range format provided.")
+            raise TooManyValuesError(values=values, field_name=self.name, max_values=2)
 
         return (
             self._validate_metric_value(
@@ -305,7 +297,11 @@ class MetricRangeField(Field):
             value = None
 
         elif isinstance(value, date):
-            raise TypeError("Invalid metric range type provided.")
+            raise FieldTypeError(
+                value=value,
+                field_name=self.name,
+                valid_types=[int, float, type(None)],
+            )
 
         elif isinstance(value, str | int):
             value = float(value)
@@ -331,8 +327,8 @@ class MetricRangeField(Field):
         )
 
         if min_value and max_value and float(min_value) > float(max_value):
-            raise ValueError(
-                f"Range min value greater than max value: {min_value} > {max_value}"
+            raise RangeValidationError(
+                min_value=min_value, max_value=max_value, field_name=self.name
             )
 
         return min_value, max_value
@@ -351,7 +347,9 @@ class Leaderboard:
             field_obj = self.fields.get(field_name)
 
             if not field_obj:
-                raise ValueError(f"Invalid field name: {field_name}.")
+                raise FieldNameError(
+                    field_name=field_name, valid_values=self.fields.keys()
+                )
 
             params |= field_obj.get_params(value)
 
