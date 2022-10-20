@@ -18,11 +18,11 @@ from rich.progress import (
 )
 
 
-console = Console()
-
-
 #######################################################################################
-# PROGRESS BAR FUNCTIONS
+# PROGRESS BAR AND CONSOLE
+
+
+console = Console()
 
 
 _TASK_DESCRIPTION = "[bold #AAAAAA]({done} out of {total} files downloaded)"
