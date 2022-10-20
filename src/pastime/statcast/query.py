@@ -13,9 +13,9 @@ from pastime.statcast.field import (
     Field,
     Leaderboard,
     MetricRangeField,
-    Param,
     construct_fields,
 )
+from pastime.statcast.types import Param
 
 
 #######################################################################################

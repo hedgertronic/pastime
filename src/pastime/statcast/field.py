@@ -14,10 +14,7 @@ from pastime.statcast.exceptions import (
     RangeValidationError,
     TooManyValuesError,
 )
-
-
-ParamComponent = str | int | float | date | None
-Param = ParamComponent | Sequence[ParamComponent]
+from pastime.statcast.types import Param, ParamComponent
 
 
 @dataclass
