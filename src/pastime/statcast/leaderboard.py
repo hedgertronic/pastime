@@ -11,7 +11,7 @@ def exit_velocity(
     minimum_bbe: str = "qualified",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="exit_velocity",
+        leaderboard_name="exit_velocity",
         player_type=player_type,
         position=position,
         team=team,
@@ -28,7 +28,7 @@ def expected_stats(
     minimum_bip: str = "qualified",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="expected_stats",
+        leaderboard_name="expected_stats",
         player_type=player_type,
         position=position,
         team=team,
@@ -43,7 +43,7 @@ def percentile_rankings(
     season: str | int = 2022,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="percentile_rankings",
+        leaderboard_name="percentile_rankings",
         player_type=player_type,
         team=team,
         season=season,
@@ -59,7 +59,7 @@ def swing_take(
     min_pitches: str = "qualified",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="swing_take",
+        leaderboard_name="swing_take",
         season=season,
         player_type=player_type,
         group=group,
@@ -76,7 +76,7 @@ def pitch_arsenals(
     min_pitches: str | int = 250,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="pitch_arsenals",
+        leaderboard_name="pitch_arsenals",
         season=season,
         metric=metric,
         handedness=handedness,
@@ -92,7 +92,7 @@ def pitch_arsenal_stats(
     min_pa: str | int = 10,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="pitch_arsenal_stats",
+        leaderboard_name="pitch_arsenal_stats",
         player_type=player_type,
         pitch_type=pitch_type,
         team=team,
@@ -108,7 +108,7 @@ def home_runs(
     min_hr: str | int = 0,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="home_runs",
+        leaderboard_name="home_runs",
         season=season,
         player_type=player_type,
         team=team,
@@ -122,7 +122,7 @@ def year_to_year_changes(
     year_pair: str = "2021-2022",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="year_to_year_changes",
+        leaderboard_name="year_to_year_changes",
         player_type=player_type,
         stat_type=stat_type,
         year_pair=year_pair,
@@ -138,7 +138,7 @@ def pitch_tempo(
     split_seasons: bool = False,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="pitch_tempo",
+        leaderboard_name="pitch_tempo",
         player_type=player_type,
         min_pitches=min_pitches,
         team=team,
@@ -157,7 +157,7 @@ def pitch_movement(
     min_pitches: str = "qualified",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="pitch_movement",
+        leaderboard_name="pitch_movement",
         season=season,
         pitch_type=pitch_type,
         team=team,
@@ -172,7 +172,7 @@ def active_spin(
     min_pitches: str | int = 50,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="active_spin",
+        leaderboard_name="active_spin",
         season=season,
         handedness=handedness,
         min_pitches=min_pitches,
@@ -187,7 +187,7 @@ def spin_direction_comparison(
     pov: str = "pitcher",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="spin_direction_comparison",
+        leaderboard_name="spin_direction_comparison",
         season=season,
         team=team,
         pitch_types=pitch_types,
@@ -205,7 +205,7 @@ def spin_direction(
     pov: str = "pitcher",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="spin_direction",
+        leaderboard_name="spin_direction",
         season=season,
         team=team,
         pitch_type=pitch_type,
@@ -227,7 +227,7 @@ def oaa(
     split_seasons: bool = False,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="oaa",
+        leaderboard_name="oaa",
         player_type=player_type,
         min_attempts=min_attempts,
         position=position,
@@ -247,7 +247,7 @@ def of_directional_oaa(
     season: str | int = 2022,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="of_directional_oaa",
+        leaderboard_name="of_directional_oaa",
         min_opportunities=min_opportunities,
         team=team,
         season=season,
@@ -261,7 +261,7 @@ def of_catch_probability(
     season: str | int = 2022,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="of_catch_probability",
+        leaderboard_name="of_catch_probability",
         type="team" if by_team else "player",
         min_opportunities=min_opportunities,
         play_type=play_type,
@@ -274,7 +274,7 @@ def outfield_jump(
     min_attempts: str = "qualifed",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="outfield_jump",
+        leaderboard_name="outfield_jump",
         season=season,
         min_attempts=min_attempts,
     ).request()
@@ -287,7 +287,7 @@ def poptime(
     min_attempts_3b: str | int = 0,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="poptime",
+        leaderboard_name="poptime",
         team=team,
         season=season,
         min_attempts_2b=min_attempts_2b,
@@ -302,7 +302,7 @@ def framing(
     min_pitches: str = "qualified",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="framing",
+        leaderboard_name="framing",
         player_type=player_type,
         team=team,
         season=season,
@@ -317,7 +317,7 @@ def arm_strength(
     min_throws: str | int = 100,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="arm_strength",
+        leaderboard_name="arm_strength",
         position=position,
         team=team,
         season=season,
@@ -333,7 +333,7 @@ def sprint_speed(
     min_opportunities: str | int = 10,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="sprint_speed",
+        leaderboard_name="sprint_speed",
         position=position,
         team=team,
         start_season=start_season,
@@ -351,7 +351,7 @@ def running_splits(
     percentile: bool = False,
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="running_splits",
+        leaderboard_name="running_splits",
         position=position,
         team=team,
         season=season,
@@ -370,7 +370,7 @@ def park_factors(
     stat: str = "woba",
 ) -> pl.DataFrame:
     return LeaderboardQuery(
-        name="park_factors",
+        leaderboard_name="park_factors",
         factor_type=factor_type,
         season=season,
         bat_side=bat_side,
