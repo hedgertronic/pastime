@@ -183,8 +183,9 @@ class PlayerLookupField(Field):
 @dataclass
 class DateField(Field):
     date_format: str = "%Y-%m-%d"
-    min_value: int | None = None
-    max_value: int | None = None
+    min_value: str | None = None
+    max_value: str | None = None
+    all_dates_slug: str | None = None
 
     def get_params(self, values: Param) -> dict[str, list[str]]:
         value = self.validate_values(values)
@@ -210,13 +211,31 @@ class DateField(Field):
         if not values:
             values = None
 
-        elif isinstance(values, str):
-            values = datetime.strptime(values, self.date_format).date()
-
-        elif isinstance(values, int | float):
+        elif isinstance(values, float):
             raise FieldTypeError(
                 value=values, field_name=self.name, valid_types=[str, date, type(None)]
             )
+
+        elif isinstance(values, str | int):
+            values = datetime.strptime(str(values), self.date_format).date()
+
+        min_value = (
+            datetime.strptime(str(self.min_value), self.date_format).date()
+            if self.min_value
+            else None
+        )
+
+        max_value = (
+            datetime.strptime(str(self.max_value), self.date_format).date()
+            if self.max_value
+            else None
+        )
+
+        if min_value and values and values < min_value:
+            raise FieldValueError(values.strftime(self.date_format), self.name)
+
+        if max_value and values and values > max_value:
+            raise FieldValueError(values.strftime(self.date_format), self.name)
 
         return values
 

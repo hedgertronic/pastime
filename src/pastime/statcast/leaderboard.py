@@ -10,7 +10,7 @@ def exit_velocity(
     player_type: str = "batters",
     position: str | None = None,
     team: str | None = None,
-    season: str | None = None,
+    season: str | int | None = None,
     minimum_bbe: str = "qualified",
 ) -> pl.DataFrame:
     return query(
