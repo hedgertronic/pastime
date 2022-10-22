@@ -8,9 +8,11 @@ class FieldNameError(ValueError):
         message = f"'{field_name}'"
 
         close_matches = get_close_matches(field_name, valid_values)
-        close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
 
-        message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
+        if close_matches:
+            close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
+            message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
+
         super().__init__(message)
 
 
@@ -19,9 +21,10 @@ class FieldValueError(ValueError):
         message = f"'{value}' for field '{field_name}'"
 
         close_matches = get_close_matches(value, valid_values)
-        close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
 
-        message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
+        if close_matches:
+            close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
+            message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
 
         super().__init__(message)
 
@@ -61,12 +64,12 @@ class RangeValidationError(ValueError):
         self,
         min_value: str | int | float,
         max_value: str | int | float,
-        field_name: str,
+        field_name: str = None,
     ):
-        message = (
-            f"Min value '{min_value}' > max value '{max_value}'"
-            f" for field '{field_name}'"
-        )
+        message = f"Min value '{min_value}' > max value '{max_value}'"
+
+        if field_name:
+            message += f" for field '{field_name}'"
 
         super().__init__(message)
 

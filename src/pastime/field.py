@@ -1,20 +1,22 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Sequence
 
 import numpy as np
+import pkg_resources
 
-from pastime.lookup import lookup_id
-from pastime.statcast.exceptions import (
+from pastime.exceptions import (
     FieldNameError,
     FieldTypeError,
     FieldValueError,
     RangeValidationError,
     TooManyValuesError,
 )
-from pastime.statcast.types import Param, ParamComponent
+from pastime.lookup import lookup_id
+from pastime.type_aliases import Param, ParamComponent
 
 
 @dataclass
@@ -25,10 +27,6 @@ class Field:
     choices: dict[str, str] = field(default_factory=dict)
     frequencies: dict[str, float] = field(default_factory=dict)
     aliases: dict[str, list[str]] = field(default_factory=dict)
-    delimiter: str = "|"
-    add_trailing_delimiter: bool = True
-    min_value: int | None = None
-    max_value: int | None = None
 
     def get_params(self, values: Param) -> dict[str, list[str]]:
         return {self.slug: [str(self.validate_values(values))]}
@@ -91,7 +89,11 @@ class SingleSelectField(Field):
         )
 
 
+@dataclass
 class MultiSelectField(Field):
+    delimiter: str = "|"
+    add_trailing_delimiter: bool = True
+
     def get_params(self, values: Param) -> dict[str, list[str]]:
         valid_values = self.validate_values(values)
 
@@ -178,66 +180,52 @@ class PlayerLookupField(Field):
         return total if total < 1.0 else 1.0
 
 
-class DateRangeField(Field):
+@dataclass
+class DateField(Field):
+    date_format: str = "%Y-%m-%d"
+    min_value: int | None = None
+    max_value: int | None = None
+
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        start, end = self.validate_values(values)
+        value = self.validate_values(values)
 
-        if start and end and start > end:
-            raise RangeValidationError(
-                min_value=str(start), max_value=str(end), field_name=self.name
-            )
+        return {self.slug: [value.strftime(self.date_format) if value else ""]}
 
-        return {
-            f"{self.slug}_gt": [str(start) if start else ""],
-            f"{self.slug}_lt": [str(end) if end else ""],
-        }
+    def get_values(self, params: dict[str, list[str]]) -> date | None:
+        param = params.get(self.slug, [""])[0]
 
-    def get_values(
-        self, params: dict[str, list[str]]
-    ) -> tuple[date | None, date | None]:
-        start_date = params.get(f"{self.slug}_gt", [""])[0]
-        end_date = params.get(f"{self.slug}_lt", [""])[0]
+        return datetime.strptime(param, self.date_format).date() if param else None
 
-        return (
-            date.fromisoformat(start_date) if start_date else None,
-            date.fromisoformat(end_date) if end_date else None,
-        )
+    def validate_values(self, values: Param) -> date | None:
+        if (
+            not isinstance(values, str)
+            and isinstance(values, Sequence)
+            and len(values) > 1
+        ):
+            raise TooManyValuesError(values=values, field_name=self.name, max_values=1)
 
-    def validate_values(self, values: Param) -> tuple[date | None, date | None]:
+        if not isinstance(values, str) and isinstance(values, Sequence):
+            values = values[0]
+
         if not values:
-            values = [None, None]
+            values = None
 
-        elif isinstance(values, str) or not isinstance(values, Sequence):
-            value = self._validate_date_value(values)
-            values = [value, value]
+        elif isinstance(values, str):
+            values = datetime.strptime(values, self.date_format).date()
 
-        elif isinstance(values, Sequence) and len(values) == 0:
-            values = [None, None]
-
-        elif isinstance(values, Sequence) and len(values) > 2:
-            raise TooManyValuesError(values=values, field_name=self.name, max_values=2)
-
-        return (
-            self._validate_date_value(values[0]) if values[0] else None,
-            self._validate_date_value(values[1]) if values[1] else None,
-        )
-
-    def _validate_date_value(self, value: ParamComponent) -> date | None:
-        if not value:
-            value = None
-
-        elif isinstance(value, str):
-            value = date.fromisoformat(value)
-
-        elif isinstance(value, int | float):
+        elif isinstance(values, int | float):
             raise FieldTypeError(
-                value=value, field_name=self.name, valid_types=[str, date, type(None)]
+                value=values, field_name=self.name, valid_types=[str, date, type(None)]
             )
 
-        return value
+        return values
 
 
+@dataclass
 class MetricRangeField(Field):
+    min_value: int | None = None
+    max_value: int | None = None
+
     def get_params(self, values: Param) -> dict[str, list[str]]:
         values = self.validate_values(values)
 
@@ -331,7 +319,33 @@ class MetricRangeField(Field):
         return min_value, max_value
 
 
-class Leaderboard:
+# Want object with collection of fields associated
+# SC Search: pitch_type, etc
+# Each SC Leaderboard has its own fields
+# Each FG Query has its own fields
+# class Leaderboard:
+#     def __init__(self, name: str, slug: str, fields: dict[str, dict[str, Any]]):
+#         self.name = name
+#         self.slug = slug
+#         self.fields: dict[str, Field] = construct_fields(fields)
+
+#     def get_params(self, values: dict[str, Param]) -> dict[str, list[str]]:
+#         params: dict[str, list[str]] = {}
+
+#         for field_name, value in values.items():
+#             field_obj = self.fields.get(field_name)
+
+#             if not field_obj:
+#                 raise FieldNameError(
+#                     field_name=field_name, valid_values=self.fields.keys()
+#                 )
+
+#             params |= field_obj.get_params(value)
+
+#         return params
+
+
+class Database:
     def __init__(self, name: str, slug: str, fields: dict[str, dict[str, Any]]):
         self.name = name
         self.slug = slug
@@ -353,11 +367,15 @@ class Leaderboard:
         return params
 
 
+#######################################################################################
+# FIELD DATA
+
+
 FIELD_TYPES = {
     "single-select": SingleSelectField,
     "multi-select": MultiSelectField,
     "player-lookup": PlayerLookupField,
-    "date-range": DateRangeField,
+    "date-range": DateField,
     "metric-range": MetricRangeField,
 }
 
@@ -367,3 +385,81 @@ def construct_fields(data: dict[str, dict[str, Any]]):
         field_name: FIELD_TYPES.get(field_data["field_type"], Field)(**field_data)
         for field_name, field_data in data.items()
     }
+
+
+_statcast_data: dict[str, dict[str, Any]] = json.load(
+    pkg_resources.resource_stream(__name__, "data/statcast_fields.json")
+)
+
+
+STATCAST_FIELDS: dict[str, Database] = {
+    _db_name: Database(**_field_data)
+    for _db_name, _field_data in _statcast_data.items()
+}
+
+
+_fangraphs_data: dict[str, dict[str, Any]] = json.load(
+    pkg_resources.resource_stream(__name__, "data/fangraphs_fields.json")
+)
+
+
+FANGRAPHS_FIELDS: dict[str, Database] = {
+    _db_name: Database(**_field_data)
+    for _db_name, _field_data in _fangraphs_data.items()
+}
+
+
+# STATCAST_DEFAULT_PARAMS: dict[str, dict[str, list[str]]]
+
+
+DEFAULT_SEARCH_PARAMS: dict[str, list[str]] = {}
+# DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
+
+
+for _field in STATCAST_FIELDS["search"].fields.values():
+    if _default_choice := _field.choices.get("default"):
+        DEFAULT_SEARCH_PARAMS |= _field.get_params(_default_choice)
+
+    # elif _field.field_type != "metric-range":
+    #     DEFAULT_SEARCH_PARAMS |= {_field.slug: [""]}
+
+
+# _search_field_data: dict[str, dict[str, Any]] = json.load(
+#     pkg_resources.resource_stream(__name__, "data/search_fields.json")
+# )
+
+# _leaderboard_field_data: dict[str, dict[str, Any]] = json.load(
+#     pkg_resources.resource_stream(__name__, "data/leaderboard_fields.json")
+# )
+
+
+# SEARCH_FIELDS: dict[str, Field] = construct_fields(_search_field_data)
+# LEADERBOARD_FIELDS: dict[str, Leaderboard] = {
+#     _leaderboard_name: Leaderboard(**_field_data)
+#     for _leaderboard_name, _field_data in _leaderboard_field_data.items()
+# }
+
+
+# DEFAULT_SEARCH_PARAMS: dict[str, list[str]] = {}
+# # DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
+
+
+# for _field in SEARCH_FIELDS.values():
+#     if _default_choice := _field.choices.get("default"):
+#         DEFAULT_SEARCH_PARAMS |= _field.get_params(_default_choice)
+
+#     elif _field.field_type != "metric-range":
+#         DEFAULT_SEARCH_PARAMS |= {_field.name: [""]}
+
+
+# for _leaderboard in LEADERBOARD_FIELDS.values():
+#     _default_params: dict[str, list[str]] = {}
+
+#     for _field in _leaderboard.fields.values():
+#         if _default_choice := _field.choices.get("default"):
+#             _default_params |= _field.get_params(_default_choice)
+
+#         elif _field.field_type != "metric-range":
+#             _default_params |= {_field.slug: [""]}
+
+#     DEFAULT_LEADERBOARD_PARAMS[_leaderboard.name] = _default_params

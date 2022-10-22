@@ -1,4 +1,1276 @@
 {
+    "search": {
+        "name": "search",
+        "slug": "",
+        "fields": {
+            "venue": {
+                "name": "venue",
+                "slug": "stadium",
+                "choices": {
+                    "at&t park": "2395",
+                    "angel stadium": "1",
+                    "bb&t ballpark": "2735",
+                    "busch stadium": "2889",
+                    "champion stadium": "2504",
+                    "chase field": "15",
+                    "citi field": "3289",
+                    "citizens bank park": "2681",
+                    "comerica park": "2394",
+                    "coors field": "19",
+                    "dodger stadium": "22",
+                    "estadio de beisbol monterrey": "2701",
+                    "fenway park": "3",
+                    "fort bragg field": "5010",
+                    "gabp": "2602",
+                    "globe life park": "13",
+                    "guaranteed rate field": "4",
+                    "hard rock stadium": "20",
+                    "hiram bithorn stadium": "2535",
+                    "kauffman stadium": "7",
+                    "marlins park": "4169",
+                    "metrodome": "8",
+                    "miller park": "32",
+                    "minute maid park": "2392",
+                    "nationals park": "3309",
+                    "oakland coliseum": "10",
+                    "oracle park": "2395",
+                    "oriole park": "2",
+                    "pnc park": "31",
+                    "petco park": "2680",
+                    "progressive field": "5",
+                    "rogers centre": "14",
+                    "shea stadium": "25",
+                    "suntrust park": "4705",
+                    "sydney cricket ground": "4589",
+                    "t-mobile park": "680",
+                    "target field": "3312",
+                    "tokyo dome": "2397",
+                    "tropicana field": "12",
+                    "turner field": "16",
+                    "wrigley field": "17",
+                    "yankee stadium": "9"
+                },
+                "frequencies": {
+                    "default": 0.0333
+                },
+                "field_type": "single-select"
+            },
+            "player_type": {
+                "name": "player_type",
+                "slug": "player_type",
+                "choices": {
+                    "default": "pitcher",
+                    "pitcher": "pitcher",
+                    "batter": "batter",
+                    "catcher": "fielder_2",
+                    "1st": "fielder_3",
+                    "2nd": "fielder_4",
+                    "3rd": "fielder_5",
+                    "ss": "fielder_6",
+                    "lf": "fielder_7",
+                    "cf": "fielder_8",
+                    "rf": "fielder_9"
+                },
+                "field_type": "single-select"
+            },
+            "opponent": {
+                "name": "opponent",
+                "slug": "hfOpponent",
+                "choices": {
+                    "american league": "AL",
+                    "national league": "NL",
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "indians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY"
+                },
+                "frequencies": {
+                    "default": 0.0333,
+                    "AL": 0.5,
+                    "NL": 0.5
+                },
+                "field_type": "single-select"
+            },
+            "pitcher_handedness": {
+                "name": "pitcher_handedness",
+                "slug": "pitcher_throws",
+                "choices": {
+                    "right": "R",
+                    "left": "L"
+                },
+                "frequencies": {
+                    "R": 0.75,
+                    "L": 0.3
+                },
+                "field_type": "single-select"
+            },
+            "batter_handedness": {
+                "name": "batter_handedness",
+                "slug": "batter_stands",
+                "choices": {
+                    "right": "R",
+                    "left": "L"
+                },
+                "frequencies": {
+                    "R": 0.6,
+                    "L": 0.45
+                },
+                "field_type": "single-select"
+            },
+            "team": {
+                "name": "team",
+                "slug": "hfTeam",
+                "choices": {
+                    "angels": "LAA",
+                    "astros": "HOU",
+                    "athletics": "OAK",
+                    "blue jays": "TOR",
+                    "braves": "ATL",
+                    "brewers": "MIL",
+                    "cardinals": "STL",
+                    "cubs": "CHC",
+                    "d-backs": "ARI",
+                    "dodgers": "LAD",
+                    "giants": "SF",
+                    "indians": "CLE",
+                    "mariners": "SEA",
+                    "marlins": "MIA",
+                    "mets": "NYM",
+                    "nationals": "WSH",
+                    "orioles": "BAL",
+                    "padres": "SD",
+                    "phillies": "PHI",
+                    "pirates": "PIT",
+                    "rangers": "TEX",
+                    "rays": "TB",
+                    "red sox": "BOS",
+                    "reds": "CIN",
+                    "rockies": "COL",
+                    "royals": "KC",
+                    "tigers": "DET",
+                    "twins": "MIN",
+                    "white sox": "CWS",
+                    "yankees": "NYY",
+                    "al": "AL",
+                    "nl": "NL"
+                },
+                "frequencies": {
+                    "default": 0.0333,
+                    "AL": 0.5,
+                    "NL": 0.5
+                },
+                "field_type": "single-select"
+            },
+            "position": {
+                "name": "position",
+                "slug": "position",
+                "choices": {
+                    "1b": "3",
+                    "2b": "4",
+                    "ss": "6",
+                    "3b": "5",
+                    "c": "2",
+                    "lf": "7",
+                    "cf": "8",
+                    "rf": "9",
+                    "dh": "10",
+                    "p": "1",
+                    "sp": "SP",
+                    "rp": "RP"
+                },
+                "frequencies": {
+                    "default": 0.5
+                },
+                "field_type": "single-select"
+            },
+            "home_or_away": {
+                "name": "home_or_away",
+                "slug": "home_road",
+                "choices": {
+                    "home": "Home",
+                    "away": "Road"
+                },
+                "frequencies": {
+                    "default": 0.5
+                },
+                "field_type": "single-select"
+            },
+            "min_num_of_total_pitches": {
+                "name": "min_num_of_total_pitches",
+                "slug": "min_pitches",
+                "choices": {
+                    "default": "0",
+                    "none": "0",
+                    "10 pitches": "10",
+                    "25 pitches": "25",
+                    "50 pitches": "50",
+                    "100 pitches": "100",
+                    "150 pitches": "150",
+                    "200 pitches": "200",
+                    "250 pitches": "250",
+                    "300 pitches": "300",
+                    "400 pitches": "400",
+                    "500 pitches": "500",
+                    "750 pitches": "750",
+                    "1000 pitches": "1000",
+                    "1250 pitches": "1250",
+                    "1500 pitches": "1500",
+                    "1750 pitches": "1750",
+                    "2000 pitches": "2000",
+                    "2250 pitches": "2250",
+                    "2500 pitches": "2500",
+                    "5000 pitches": "5000",
+                    "10000 pitches": "10000"
+                },
+                "field_type": "single-select"
+            },
+            "min_num_of_results": {
+                "name": "min_num_of_results",
+                "slug": "min_results",
+                "choices": {
+                    "default": "0",
+                    "none": "0",
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "100": "100",
+                    "150": "150",
+                    "200": "200",
+                    "250": "250",
+                    "300": "300",
+                    "400": "400",
+                    "500": "500",
+                    "750": "750",
+                    "1000": "1000",
+                    "1250": "1250",
+                    "1500": "1500",
+                    "1750": "1750",
+                    "2000": "2000",
+                    "2250": "2250",
+                    "2500": "2500",
+                    "5000": "5000",
+                    "10000": "10000"
+                },
+                "field_type": "single-select"
+            },
+            "group_by": {
+                "name": "group_by",
+                "slug": "group_by",
+                "choices": {
+                    "default": "name",
+                    "player name": "name",
+                    "player & game date": "name-date",
+                    "player & year": "name-year",
+                    "player & event": "name-event",
+                    "team": "team",
+                    "team & game date": "team-date",
+                    "venue": "venue",
+                    "league": "league",
+                    "league & year": "league-year"
+                },
+                "field_type": "single-select"
+            },
+            "sort_by": {
+                "name": "sort_by",
+                "slug": "sort_col",
+                "choices": {
+                    "default": "pitches",
+                    "pitches": "pitches",
+                    "pitch %": "pitch_percent",
+                    "ba": "ba",
+                    "xba": "xba",
+                    "ba-xba": "xbadiff",
+                    "woba": "woba",
+                    "xwoba": "xwoba",
+                    "woba-xwoba": "wobadiff",
+                    "slg": "slg",
+                    "xslg": "xslg",
+                    "slg-xslg": "xslgdiff",
+                    "iso": "iso",
+                    "babip": "babip",
+                    "avg pitch velocity": "velocity",
+                    "avg spin rate": "spin_rate",
+                    "avg perceived velocity": "effective_speed",
+                    "avg exit velocity": "launch_speed",
+                    "avg distance": "bbdist",
+                    "avg launch angle": "launch_angle",
+                    "vertical release point": "release_pos_z",
+                    "horizontal release point": "release_pos_x",
+                    "avg normalized sz plate z": "pz",
+                    "avg normalized sz plate x": "px",
+                    "avg plate z": "plate_z",
+                    "avg plate x": "plate_x",
+                    "avg start distance p": "start_distance_1",
+                    "avg start distance c": "start_distance_2",
+                    "avg start distance 1b": "start_distance_3",
+                    "avg start distance 2b": "start_distance_4",
+                    "avg start distance 3b": "start_distance_5",
+                    "avg start distance ss": "start_distance_6",
+                    "avg start distance lf": "start_distance_7",
+                    "avg start distance cf": "start_distance_8",
+                    "avg start distance rf": "start_distance_9"
+                },
+                "field_type": "single-select"
+            },
+            "player_and_event_sort": {
+                "name": "player_and_event_sort",
+                "slug": "player_event_sort",
+                "choices": {
+                    "default": "h_launch_speed",
+                    "exit velocity": "h_launch_speed",
+                    "pitch velocity": "api_p_release_speed",
+                    "launch angle": "h_launch_angle",
+                    "launch direction": "h_launch_direction",
+                    "launch direction pull/opp": "h_launch_direction_pullopp",
+                    "distance projected": "api_h_distance_projected",
+                    "release extension": "api_p_release_extension",
+                    "release spin rate": "api_p_release_spin_rate",
+                    "lineup position": "lineup_cd",
+                    "perceived speed": "api_p_effective_speed",
+                    "plate speed": "api_p_plate_speed",
+                    "release position x": "api_release_pos_x",
+                    "release position z": "api_release_pos_z",
+                    "plate x": "api_plate_x",
+                    "plate z": "api_plate_z",
+                    "xba": "estimated_ba_using_speedangle",
+                    "xslg": "estimated_slg_using_speedangle",
+                    "xiso": "estimated_iso_using_speedangle",
+                    "xwoba": "estimated_woba_using_speedangle",
+                    "home score": "home_score",
+                    "away score": "away_score",
+                    "home score diff": "home_score_diff",
+                    "bat score": "bat_score",
+                    "field score": "fld_score",
+                    "bat score diff": "bat_score_diff",
+                    "home win exp": "home_win_exp",
+                    "bat win exp": "bat_win_exp",
+                    "pitcher times through order": "n_thruorder_pitcher",
+                    "batter times through order": "n_priorpa_thisgame_player_at_bat"
+                },
+                "field_type": "single-select"
+            },
+            "sort_order": {
+                "name": "sort_order",
+                "slug": "sort_order",
+                "choices": {
+                    "default": "desc",
+                    "desc": "desc",
+                    "asc": "asc"
+                },
+                "field_type": "single-select"
+            },
+            "min_pa": {
+                "name": "min_pa",
+                "slug": "min_pas",
+                "choices": {
+                    "default": "0",
+                    "none": "0",
+                    "5 pa": "5",
+                    "10 pa": "10",
+                    "20 pa": "20",
+                    "30 pa": "30",
+                    "40 pa": "40",
+                    "50 pa": "50",
+                    "75 pa": "75",
+                    "100 pa": "100",
+                    "150 pa": "150",
+                    "200 pa": "200",
+                    "250 pa": "250",
+                    "400 pa": "400",
+                    "500 pa": "500",
+                    "1000 pa": "1000"
+                },
+                "field_type": "single-select"
+            },
+            "type": {
+                "name": "type",
+                "slug": "type",
+                "choices": {
+                    "default": "details",
+                    "details": "details"
+                },
+                "field_type": "single-select"
+            },
+            "all": {
+                "name": "all",
+                "slug": "all",
+                "choices": {
+                    "default": "true",
+                    "true": "true"
+                },
+                "field_type": "single-select"
+            },
+            "pitch_type": {
+                "name": "pitch_type",
+                "slug": "hfPT",
+                "choices": {
+                    "4-seam fastball": "FF",
+                    "2-seam fastball": "FT",
+                    "cutter": "FC",
+                    "sinker": "SI",
+                    "split finger": "FS",
+                    "slider": "SL",
+                    "changeup": "CH",
+                    "curveball": "CU",
+                    "knuckle curve": "KC",
+                    "knuckle ball": "KN",
+                    "forkball": "FO",
+                    "eephus": "EP",
+                    "screwball": "SC",
+                    "intentional ball": "IN",
+                    "pitchout": "PO",
+                    "automatic ball": "AB",
+                    "unknown": "UN"
+                },
+                "frequencies": {
+                    "default": 0.1,
+                    "FF": 0.4,
+                    "SL": 0.2,
+                    "CH": 0.15
+                },
+                "aliases": {
+                    "fastballs": [
+                        "FF",
+                        "FT",
+                        "FC",
+                        "SI"
+                    ],
+                    "offspeed": [
+                        "FS",
+                        "CH",
+                        "FO",
+                        "SC"
+                    ],
+                    "breaking": [
+                        "SL",
+                        "CU",
+                        "KC",
+                        "KN",
+                        "EP"
+                    ]
+                },
+                "field_type": "multi-select"
+            },
+            "pa_result": {
+                "name": "pa_result",
+                "slug": "hfAB",
+                "choices": {
+                    "single": "single",
+                    "double": "double",
+                    "triple": "triple",
+                    "home run": "home..run",
+                    "field out": "field..out",
+                    "strikeout": "strikeout",
+                    "strikeout double play": "strikeout..double..play",
+                    "walk": "walk",
+                    "double play": "double..play",
+                    "field error": "field..error",
+                    "gidp": "grounded..into..double..play",
+                    "fielders choice": "fielders..choice",
+                    "fielders choice out": "fielders..choice..out",
+                    "batter interference": "batter..interference",
+                    "catcher interference": "catcher..interf",
+                    "caught stealing 2b": "caught..stealing..2b",
+                    "caught stealing 3b": "caught..stealing..3b",
+                    "caught stealing home": "caught..stealing..home",
+                    "force out": "force..out",
+                    "hit by pitch": "hit..by..pitch",
+                    "intentional walk": "intent..walk",
+                    "sac bunt": "sac..bunt",
+                    "sac bunt double play": "sac..bunt..double..play",
+                    "sac fly": "sac..fly",
+                    "sac fly double play": "sac..fly..double..play",
+                    "triple play": "triple..play"
+                },
+                "frequencies": {
+                    "default": 0.01,
+                    "single": 0.05,
+                    "double": 0.03,
+                    "field..out": 0.1,
+                    "strikeout": 0.05,
+                    "walk": 0.03
+                },
+                "aliases": {
+                    "base hit": [
+                        "single",
+                        "double",
+                        "triple",
+                        "home..run"
+                    ],
+                    "out": [
+                        "field..out",
+                        "strikeout",
+                        "strikeout..double..play",
+                        "double..play",
+                        "grounded..into..double..play",
+                        "fielders..choice",
+                        "fielders..choice..out",
+                        "force..out",
+                        "sac..bunt",
+                        "sac..bunt..double..play",
+                        "sac..fly",
+                        "sac..fly..double..play",
+                        "triple..play"
+                    ]
+                },
+                "field_type": "multi-select"
+            },
+            "batted_ball_type": {
+                "name": "batted_ball_type",
+                "slug": "hfBBT",
+                "choices": {
+                    "fly ball": "fly..ball",
+                    "pop up": "popup",
+                    "line drive": "line..drive",
+                    "ground ball": "ground..ball"
+                },
+                "frequencies": {
+                    "fly..ball": 0.05,
+                    "popup": 0.02,
+                    "line..drive": 0.05,
+                    "ground..ball": 0.1
+                },
+                "field_type": "multi-select"
+            },
+            "pitch_result": {
+                "name": "pitch_result",
+                "slug": "hfPR",
+                "choices": {
+                    "automatic ball": "automatic..ball",
+                    "ball": "ball",
+                    "ball in dirt": "blocked..ball",
+                    "called strike": "called..strike",
+                    "foul": "foul",
+                    "foul bunt": "foul..bunt",
+                    "foul pitchout": "foul..pitchout",
+                    "pitchout": "pitchout",
+                    "hit by pitch": "hit..by..pitch",
+                    "intent ball": "intent..ball",
+                    "in play, out(s)": "hit..into..play",
+                    "in play, no out": "hit..into..play..no..out",
+                    "in play, run(s)": "hit..into..play..score",
+                    "in play, pitchout run(s)": "pitchout..hit..into..play..score",
+                    "missed bunt": "missed..bunt",
+                    "foul tip": "foul..tip",
+                    "swinging pitchout": "swinging..pitchout",
+                    "swinging strike": "swinging..strike",
+                    "swinging strike (blocked)": "swinging..strike..blocked"
+                },
+                "frequencies": {
+                    "default": 0.05,
+                    "ball": 0.4,
+                    "called..strike": 0.2,
+                    "foul": 0.2,
+                    "hit..into..play": 0.15,
+                    "swinging..strike": 0.15
+                },
+                "aliases": {
+                    "swing & miss": [
+                        "foul..tip",
+                        "swinging..pitchout",
+                        "swinging..strike",
+                        "swinging..strike..blocked"
+                    ],
+                    "all swings": [
+                        "foul",
+                        "foul..pitchout",
+                        "hit..into..play",
+                        "hit..into..play..no..out",
+                        "hit..into..play..score",
+                        "pitchout..hit..into..play..score",
+                        "foul..tip",
+                        "swinging..pitchout",
+                        "swinging..strike",
+                        "swinging..strike..blocked"
+                    ]
+                },
+                "field_type": "multi-select"
+            },
+            "gameday_zones": {
+                "name": "gameday_zones",
+                "slug": "hfZ",
+                "choices": {
+                    "1": "1",
+                    "2": "2",
+                    "3": "3",
+                    "4": "4",
+                    "5": "5",
+                    "6": "6",
+                    "7": "7",
+                    "8": "8",
+                    "9": "9",
+                    "11": "11",
+                    "12": "12",
+                    "13": "13",
+                    "14": "14"
+                },
+                "frequencies": {
+                    "default": 0.1,
+                    "11": 0.15,
+                    "13": 0.15,
+                    "14": 0.25
+                },
+                "aliases": {
+                    "pitches in zone": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9"
+                    ],
+                    "pitches out of zone": [
+                        "11",
+                        "12",
+                        "13",
+                        "14"
+                    ]
+                },
+                "field_type": "multi-select"
+            },
+            "batted_ball_location": {
+                "name": "batted_ball_location",
+                "slug": "hfBBL",
+                "choices": {
+                    "pitcher": "1",
+                    "catcher": "2",
+                    "first base": "3",
+                    "second base": "4",
+                    "third base": "5",
+                    "short stop": "6",
+                    "left field": "7",
+                    "center field": "8",
+                    "right field": "9"
+                },
+                "frequencies": {
+                    "default": 0.3
+                },
+                "field_type": "multi-select"
+            },
+            "attack_zones": {
+                "name": "attack_zones",
+                "slug": "hfNewZones",
+                "choices": {
+                    "1": "1",
+                    "2": "2",
+                    "3": "3",
+                    "4": "4",
+                    "5": "5",
+                    "6": "6",
+                    "7": "7",
+                    "8": "8",
+                    "9": "9",
+                    "11": "11",
+                    "12": "12",
+                    "13": "13",
+                    "14": "14",
+                    "16": "16",
+                    "17": "17",
+                    "18": "18",
+                    "19": "19",
+                    "21": "21",
+                    "22": "22",
+                    "23": "23",
+                    "24": "24",
+                    "26": "26",
+                    "27": "27",
+                    "28": "28",
+                    "29": "29",
+                    "31": "31",
+                    "32": "32",
+                    "33": "33",
+                    "34": "34",
+                    "36": "36",
+                    "37": "37",
+                    "38": "38",
+                    "39": "39"
+                },
+                "aliases": {
+                    "heart": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9"
+                    ],
+                    "shadow": [
+                        "11",
+                        "12",
+                        "13",
+                        "14",
+                        "16",
+                        "17",
+                        "18",
+                        "19"
+                    ],
+                    "chase": [
+                        "21",
+                        "22",
+                        "23",
+                        "24",
+                        "26",
+                        "27",
+                        "28",
+                        "29"
+                    ],
+                    "waste": [
+                        "31",
+                        "32",
+                        "33",
+                        "34",
+                        "36",
+                        "37",
+                        "38",
+                        "39"
+                    ]
+                },
+                "frequencies": {
+                    "default": 0.2
+                },
+                "field_type": "multi-select"
+            },
+            "season_type": {
+                "name": "season_type",
+                "slug": "hfGT",
+                "choices": {
+                    "default": "R",
+                    "regular season": "R",
+                    "playoffs": "PO",
+                    "spring training": "S"
+                },
+                "frequencies": {
+                    "R": 1.0,
+                    "PO": 0.02,
+                    "S": 0.01
+                },
+                "field_type": "multi-select"
+            },
+            "count": {
+                "name": "count",
+                "slug": "hfC",
+                "choices": {
+                    "0-0": "00",
+                    "0-1": "01",
+                    "0-2": "02",
+                    "1-0": "10",
+                    "1-1": "11",
+                    "1-2": "12",
+                    "2-0": "20",
+                    "2-1": "21",
+                    "2-2": "22",
+                    "3-0": "30",
+                    "3-1": "31",
+                    "3-2": "32",
+                    "ahead in count (hitter)": "ahead",
+                    "even count": "even",
+                    "behind in count (hitter)": "behind",
+                    "2 strikes": "2strikes",
+                    "3 balls": "3balls"
+                },
+                "frequencies": {
+                    "default": 0.1,
+                    "00": 0.3,
+                    "01": 0.15,
+                    "10": 0.15,
+                    "11": 0.15,
+                    "ahead": 0.3,
+                    "even": 0.5,
+                    "behind": 0.3,
+                    "2strikes": 0.35,
+                    "3balls": 0.1
+                },
+                "field_type": "multi-select"
+            },
+            "season": {
+                "name": "season",
+                "slug": "hfSea",
+                "choices": {
+                    "default": "2022",
+                    "2022": "2022",
+                    "2021": "2021",
+                    "2020": "2020",
+                    "2019": "2019",
+                    "2018": "2018",
+                    "2017": "2017",
+                    "2016": "2016",
+                    "2015": "2015",
+                    "2014": "2014",
+                    "2013": "2013",
+                    "2012": "2012",
+                    "2011": "2011",
+                    "2010": "2010",
+                    "2009": "2009",
+                    "2008": "2008"
+                },
+                "aliases": {
+                    "all years": [
+                        "2022",
+                        "2021",
+                        "2020",
+                        "2019",
+                        "2018",
+                        "2017",
+                        "2016",
+                        "2015",
+                        "2014",
+                        "2013",
+                        "2012",
+                        "2011",
+                        "2010",
+                        "2009",
+                        "2008"
+                    ],
+                    "statcast": [
+                        "2022",
+                        "2021",
+                        "2020",
+                        "2019",
+                        "2018",
+                        "2017",
+                        "2016",
+                        "2015"
+                    ],
+                    "pitch tracking": [
+                        "2022",
+                        "2021",
+                        "2020",
+                        "2019",
+                        "2018",
+                        "2017",
+                        "2016",
+                        "2015",
+                        "2014",
+                        "2013",
+                        "2012",
+                        "2011",
+                        "2010",
+                        "2009",
+                        "2008"
+                    ]
+                },
+                "frequencies": {
+                    "default": 1.0
+                },
+                "field_type": "multi-select"
+            },
+            "situation": {
+                "name": "situation",
+                "slug": "hfSit",
+                "choices": {
+                    "go-ahead run at plate": "Go..Ahead.run.at.plate",
+                    "go-ahead run on base": "Go..Ahead.run.on.base",
+                    "tying run at plate": "Tying.run.at.plate",
+                    "tying run on base": "Tying.run.on.base",
+                    "tying run on deck": "Tying.run.on.deck"
+                },
+                "frequencies": {
+                    "default": 0.05
+                },
+                "field_type": "multi-select"
+            },
+            "outs": {
+                "name": "outs",
+                "slug": "hfOuts",
+                "choices": {
+                    "0": "0",
+                    "1": "1",
+                    "2": "2"
+                },
+                "frequencies": {
+                    "default": 0.35
+                },
+                "field_type": "multi-select"
+            },
+            "quality_of_contact": {
+                "name": "quality_of_contact",
+                "slug": "hfSA",
+                "choices": {
+                    "barrel": "6",
+                    "solid contact": "5",
+                    "flare/burner": "4",
+                    "poorly/under": "3",
+                    "poorly/topped": "2",
+                    "poorly/weak": "1"
+                },
+                "frequencies": {
+                    "default": 0.02,
+                    "4": 0.05,
+                    "3": 0.05,
+                    "2": 0.06
+                },
+                "field_type": "multi-select"
+            },
+            "if_alignment": {
+                "name": "if_alignment",
+                "slug": "hfInfield",
+                "choices": {
+                    "standard": "1",
+                    "strategic": "2",
+                    "shift": "3"
+                },
+                "frequencies": {
+                    "1": 0.7,
+                    "2": 0.1,
+                    "3": 0.3
+                },
+                "field_type": "multi-select"
+            },
+            "of_alignment": {
+                "name": "of_alignment",
+                "slug": "hfOutfield",
+                "choices": {
+                    "standard": "1",
+                    "strategic": "2",
+                    "3 of to one side of 2b": "3",
+                    "4th outfielder": "4"
+                },
+                "frequencies": {
+                    "default": 0.001,
+                    "1": 0.95,
+                    "2": 0.15
+                },
+                "field_type": "multi-select"
+            },
+            "runners_on": {
+                "name": "runners_on",
+                "slug": "hfRO",
+                "choices": {
+                    "no runners": "0",
+                    "risp": "5",
+                    "runner on base": "4",
+                    "runner on 1st": "1",
+                    "runner on 2nd": "2",
+                    "runner on 3rd": "3",
+                    "runner not on 1st": "6",
+                    "runner not on 2nd": "7",
+                    "runner not on 3rd": "8"
+                },
+                "frequencies": {
+                    "0": 0.65,
+                    "5": 0.25,
+                    "4": 0.45,
+                    "1": 0.35,
+                    "2": 0.2,
+                    "3": 0.1,
+                    "6": 0.75,
+                    "7": 0.85,
+                    "8": 0.95
+                },
+                "aliases": {
+                    "only runner on 1st": [
+                        "1",
+                        "7",
+                        "8"
+                    ],
+                    "only runner on 2nd": [
+                        "2",
+                        "6",
+                        "8"
+                    ],
+                    "only runner on 3rd": [
+                        "3",
+                        "6",
+                        "7"
+                    ]
+                },
+                "field_type": "multi-select"
+            },
+            "flags": {
+                "name": "flags",
+                "slug": "hfFlag",
+                "choices": {
+                    "is putout": "touch1..is..putout",
+                    "is assist": "touch1..is..assist",
+                    "is deflection": "touch1..is..deflection",
+                    "is error": "touch1..is..error",
+                    "is basehit": "is..hit..into..play..basehit",
+                    "is hard hit": "is..hit..into..play..hardhit",
+                    "is bunt": "is..bunt",
+                    "is last pitch": "is..last..pitch",
+                    "is sweet spot": "is..launch..angle..sweetspot"
+                },
+                "frequencies": {
+                    "default": 0.1
+                },
+                "field_type": "multi-select"
+            },
+            "batted_ball_direction": {
+                "name": "batted_ball_direction",
+                "slug": "hfPull",
+                "choices": {
+                    "pull": "Pull",
+                    "straightaway": "Straightaway",
+                    "opposite": "Opposite"
+                },
+                "frequencies": {
+                    "default": 0.1
+                },
+                "field_type": "multi-select"
+            },
+            "inning": {
+                "name": "inning",
+                "slug": "hfInn",
+                "choices": {
+                    "1": "1",
+                    "2": "2",
+                    "3": "3",
+                    "4": "4",
+                    "5": "5",
+                    "6": "6",
+                    "7": "7",
+                    "8": "8",
+                    "9": "9",
+                    "extra innings": "10"
+                },
+                "frequencies": {
+                    "default": 0.12,
+                    "9": 0.1,
+                    "10": 0.05
+                },
+                "field_type": "multi-select"
+            },
+            "batters": {
+                "name": "batters",
+                "slug": "batters_lookup[]",
+                "field_type": "player-lookup"
+            },
+            "pitchers": {
+                "name": "pitchers",
+                "slug": "pitchers_lookup[]",
+                "field_type": "player-lookup"
+            },
+            "start_date": {
+                "name": "start_date",
+                "slug": "game_date_gt",
+                "field_type": "date-range"
+            },
+            "end_date": {
+                "name": "end_date",
+                "slug": "game_date_lt",
+                "field_type": "date-range"
+            },
+            "exit_velocity": {
+                "name": "exit_velocity",
+                "slug": "h_launch_speed",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 124
+            },
+            "pitch_velocity": {
+                "name": "pitch_velocity",
+                "slug": "api_p_release_speed",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 110
+            },
+            "launch_angle": {
+                "name": "launch_angle",
+                "slug": "h_launch_angle",
+                "field_type": "metric-range",
+                "min_value": -90,
+                "max_value": 90
+            },
+            "launch_direction": {
+                "name": "launch_direction",
+                "slug": "h_launch_direction",
+                "field_type": "metric-range",
+                "min_value": -90,
+                "max_value": 90
+            },
+            "launch_direction_pull_opp": {
+                "name": "launch_direction_pull_opp",
+                "slug": "h_launch_direction_pullopp",
+                "field_type": "metric-range",
+                "min_value": -90,
+                "max_value": 90
+            },
+            "distance_projected": {
+                "name": "distance_projected",
+                "slug": "api_h_distance_projected",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 550
+            },
+            "release_extension": {
+                "name": "release_extension",
+                "slug": "api_p_release_extension",
+                "field_type": "metric-range"
+            },
+            "release_spin_rate": {
+                "name": "release_spin_rate",
+                "slug": "api_p_release_spin_rate",
+                "field_type": "metric-range"
+            },
+            "lineup_position": {
+                "name": "lineup_position",
+                "slug": "lineup_cd",
+                "field_type": "metric-range",
+                "min_value": 1,
+                "max_value": 9
+            },
+            "perceived_speed": {
+                "name": "perceived_speed",
+                "slug": "api_p_effective_speed",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 110
+            },
+            "plate_speed": {
+                "name": "plate_speed",
+                "slug": "api_p_plate_speed",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 110
+            },
+            "release_position_x": {
+                "name": "release_position_x",
+                "slug": "api_release_pos_x",
+                "field_type": "metric-range"
+            },
+            "release_position_z": {
+                "name": "release_position_z",
+                "slug": "api_release_pos_z",
+                "field_type": "metric-range"
+            },
+            "plate_x": {
+                "name": "plate_x",
+                "slug": "api_plate_x",
+                "field_type": "metric-range"
+            },
+            "plate_z": {
+                "name": "plate_z",
+                "slug": "api_plate_z",
+                "field_type": "metric-range"
+            },
+            "xba": {
+                "name": "xba",
+                "slug": "estimated_ba_using_speedangle",
+                "field_type": "metric-range"
+            },
+            "xslg": {
+                "name": "xslg",
+                "slug": "estimated_slg_using_speedangle",
+                "field_type": "metric-range"
+            },
+            "xiso": {
+                "name": "xiso",
+                "slug": "estimated_iso_using_speedangle",
+                "field_type": "metric-range"
+            },
+            "xwoba": {
+                "name": "xwoba",
+                "slug": "estimated_woba_using_speedangle",
+                "field_type": "metric-range"
+            },
+            "home_score": {
+                "name": "home_score",
+                "slug": "home_score",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 25
+            },
+            "away_score": {
+                "name": "away_score",
+                "slug": "away_score",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 25
+            },
+            "home_score_diff": {
+                "name": "home_score_diff",
+                "slug": "home_score_diff",
+                "field_type": "metric-range",
+                "min_value": -25,
+                "max_value": 25
+            },
+            "bat_score": {
+                "name": "bat_score",
+                "slug": "bat_score",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 25
+            },
+            "field_score": {
+                "name": "field_score",
+                "slug": "fld_score",
+                "field_type": "metric-range",
+                "min_value": 0,
+                "max_value": 25
+            },
+            "bat_score_diff": {
+                "name": "bat_score_diff",
+                "slug": "bat_score_diff",
+                "field_type": "metric-range",
+                "min_value": -25,
+                "max_value": 25
+            },
+            "home_win_exp": {
+                "name": "home_win_exp",
+                "slug": "home_win_exp",
+                "field_type": "metric-range"
+            },
+            "bat_win_exp": {
+                "name": "bat_win_exp",
+                "slug": "bat_win_exp",
+                "field_type": "metric-range"
+            },
+            "pitcher_times_through_order": {
+                "name": "pitcher_times_through_order",
+                "slug": "n_thruorder_pitcher",
+                "field_type": "metric-range",
+                "min_value": 1,
+                "max_value": 10
+            },
+            "batter_times_through_order": {
+                "name": "batter_times_through_order",
+                "slug": "n_priorpa_thisgame_player_at_bat",
+                "field_type": "metric-range",
+                "min_value": 1,
+                "max_value": 10
+            },
+            "game_pk": {
+                "name": "game_pk",
+                "slug": "game_pk",
+                "frequencies": {
+                    "default": 0.0005
+                },
+                "field_type": "as-is"
+            }
+        }
+    },
     "exit_velocity": {
         "name": "exit_velocity",
         "slug": "statcast",

@@ -1,66 +1,18 @@
 import io
-import json
 from datetime import date, timedelta
-from typing import Any, cast
+from typing import cast
 
-import pkg_resources
-import polars as pl
-
-from pastime.download import download_file, download_files
-from pastime.statcast.analysis import compute_spin_columns
-from pastime.statcast.exceptions import FieldNameError, InvalidSubgroupError
-from pastime.statcast.field import (
+from pastime.exceptions import InvalidSubgroupError, RangeValidationError
+from pastime.field import (
+    DEFAULT_SEARCH_PARAMS,
+    STATCAST_FIELDS,
+    Database,
+    DateField,
     Field,
-    Leaderboard,
     MetricRangeField,
-    construct_fields,
 )
-from pastime.statcast.types import Param
-
-
-#######################################################################################
-# STATCAST FIELD DATA
-
-
-_search_field_data: dict[str, dict[str, Any]] = json.load(
-    pkg_resources.resource_stream(__name__, "data/search_fields.json")
-)
-
-_leaderboard_field_data: dict[str, dict[str, Any]] = json.load(
-    pkg_resources.resource_stream(__name__, "data/leaderboard_fields.json")
-)
-
-
-SEARCH_FIELDS: dict[str, Field] = construct_fields(_search_field_data)
-LEADERBOARD_FIELDS: dict[str, Leaderboard] = {
-    _leaderboard_name: Leaderboard(**_field_data)
-    for _leaderboard_name, _field_data in _leaderboard_field_data.items()
-}
-
-
-DEFAULT_SEARCH_PARAMS: dict[str, list[str]] = {}
-# DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
-
-
-for _field in SEARCH_FIELDS.values():
-    if _default_choice := cast(str, _field.choices.get("default")):
-        DEFAULT_SEARCH_PARAMS |= _field.get_params(_default_choice)
-
-    elif _field.field_type != "metric-range":
-        DEFAULT_SEARCH_PARAMS |= {_field.name: [""]}
-
-
-# for _leaderboard in LEADERBOARD_FIELDS.values():
-#     _default_params: dict[str, list[str]] = {}
-
-#     for _field in _leaderboard.fields.values():
-#         if _default_choice := cast(str, _field.choices.get("default")):
-#             _default_params |= _field.get_params(_default_choice)
-
-#         elif _field.field_type != "metric-range":
-#             _default_params |= {_field.slug: [""]}
-
-#     DEFAULT_LEADERBOARD_PARAMS[_leaderboard.name] = _default_params
+from pastime.query import Query
+from pastime.type_aliases import Param
 
 
 #######################################################################################
@@ -81,19 +33,6 @@ PITCHES_PER_YEAR = GAMES_PER_YEAR * PITCHES_PER_GAME
 
 #######################################################################################
 # OTHER USEFUL INFO
-
-
-DEPRECATED_COLUMNS = [
-    "spin_dir",
-    "spin_rate_deprecated",
-    "break_angle_deprecated",
-    "break_length_deprecated",
-    "tfs_deprecated",
-    "tfs_zulu_deprecated",
-    "umpire",
-    "pitcher_duplicated_0",
-    "fielder_2_duplicated_0",
-]
 
 
 SEASON_DATES = {
@@ -124,52 +63,40 @@ _SWING_TAKE_GROUPS = {
 
 
 #######################################################################################
-# QUERY URLS
-
-
-SEARCH_URL = "https://baseballsavant.mlb.com/statcast_search/csv?"
-LEADERBOARD_URL = "https://baseballsavant.mlb.com/leaderboard"
-
-
-#######################################################################################
 # QUERY CLASSES
 
 
-class SearchQuery:
+class SearchQuery(Query):
     ####################################################################################
     # PUBLIC METHODS
 
-    def __init__(self, **kwargs: Param):
-        self.params = DEFAULT_SEARCH_PARAMS
+    def __init__(
+        self,
+        url: str,
+        database_name: str = "search",
+        fields: dict[str, Database] = STATCAST_FIELDS,
+        **kwargs: Param,
+    ):
         self.frequency = 1.0
         self.metric_counter = 1
         self.requests_to_make: list[dict[str, list[str]]] = []
 
-        date_range = kwargs.pop("date_range", None)
+        super().__init__(url, database_name, fields, **kwargs)
 
-        for field_name, field_values in kwargs.items():
-            if not field_values:
-                continue
+        self.params = DEFAULT_SEARCH_PARAMS | self.params
 
-            field = SEARCH_FIELDS.get(field_name)
+        self._update_dates()
 
-            if not field:
-                raise FieldNameError(
-                    field_name=field_name, valid_values=SEARCH_FIELDS.keys()
-                )
-
-            self._add_param(field, field_values)
-
-        self._add_dates(date_range or None)
-
-    def update_seasons(self):
-        season_field = SEARCH_FIELDS["season"]
+    def update_seasons(self) -> None:
+        season_field = self.database.fields["season"]
 
         seasons = cast(list[str], season_field.get_values(self.params))
 
-        start, end = cast(
-            tuple[date | None, date | None],
-            SEARCH_FIELDS["date_range"].get_values(self.params),
+        start = cast(
+            date | None, self.database.fields["start_date"].get_values(self.params)
+        )
+        end = cast(
+            date | None, self.database.fields["end_date"].get_values(self.params)
         )
 
         self._add_param(
@@ -182,29 +109,8 @@ class SearchQuery:
             ),
         )
 
-    def request(self, add_spin_columns: bool = False, **kwargs) -> pl.DataFrame:
-        self._prepare_requests()
-
-        output = io.StringIO()
-
-        output = download_files(
-            url=SEARCH_URL,
-            output=output,
-            params=self.requests_to_make,
-            request_name="Statcast Search",
-            messages=self._get_messages(),
-            **kwargs,
-        )
-
-        data = (
-            pl.read_csv(output, parse_dates=True, ignore_errors=True)
-            .drop_nulls(subset="game_date")
-            .drop(DEPRECATED_COLUMNS)
-            .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
-            .fill_nan(None)
-        )
-
-        return compute_spin_columns(data) if add_spin_columns else data
+    def request(self, **kwargs) -> io.StringIO:
+        return super().request(messages=self._get_messages(), **kwargs)
 
     ####################################################################################
     # HELPER METHODS
@@ -215,7 +121,10 @@ class SearchQuery:
 
         new_params = field.get_params(values)
 
-        if isinstance(field, MetricRangeField):
+        if isinstance(field, DateField):
+            pass
+
+        elif isinstance(field, MetricRangeField):
             new_params[f"metric_{self.metric_counter}"] = new_params.pop(
                 "metric_{counter}"
             )
@@ -231,16 +140,28 @@ class SearchQuery:
         self.params |= new_params
         self.frequency *= field.get_frequency(self.params)
 
-    def _add_dates(self, date_range: Param) -> None:
-        date_range_field = SEARCH_FIELDS["date_range"]
-        date_params = date_range_field.get_params(date_range)
+    def _update_dates(self) -> None:
+        start_field = self.database.fields["start_date"]
+        end_field = self.database.fields["end_date"]
 
-        seasons = cast(list[str], SEARCH_FIELDS["season"].get_values(self.params))
+        seasons = cast(
+            list[str], self.database.fields["season"].get_values(self.params)
+        )
 
-        start = date_params["game_date_gt"][0] or SEASON_DATES[int(seasons[0])]["start"]
-        end = date_params["game_date_lt"][0] or SEASON_DATES[int(seasons[-1])]["end"]
+        start = (
+            cast(date | None, start_field.get_values(self.params))
+            or SEASON_DATES[int(seasons[0])]["start"]
+        )
+        end = (
+            cast(date | None, end_field.get_values(self.params))
+            or SEASON_DATES[int(seasons[-1])]["end"]
+        )
 
-        self._add_param(date_range_field, [start, end])
+        if start > end:
+            raise RangeValidationError(min_value=str(start), max_value=str(end))
+
+        self._add_param(start_field, start)
+        self._add_param(end_field, end)
 
     def _prepare_requests(self):
         request_date_pairs = self._get_date_pairs()
@@ -248,18 +169,16 @@ class SearchQuery:
         for start_date, end_date in request_date_pairs:
             params_copy = self.params.copy()
 
-            params_copy["game_date_gt"] = [start_date]
-            params_copy["game_date_lt"] = [end_date]
+            params_copy["game_date_gt"] = [start_date] if start_date else [""]
+            params_copy["game_date_lt"] = [end_date] if end_date else [""]
 
             self.requests_to_make.append(params_copy)
 
     def _get_date_pairs(self) -> list[tuple[str, str]]:
         date_pairs: list[tuple[str, str]] = []
 
-        start, end = cast(
-            tuple[date, date],
-            SEARCH_FIELDS["date_range"].get_values(self.params),
-        )
+        start = cast(date, self.database.fields["start_date"].get_values(self.params))
+        end = cast(date, self.database.fields["end_date"].get_values(self.params))
 
         est_rows = PITCHES_PER_YEAR * self.frequency
 
@@ -293,9 +212,11 @@ class SearchQuery:
     def _get_messages(self) -> list[str]:
         messages = []
 
-        start, end = cast(
-            tuple[date | None, date | None],
-            SEARCH_FIELDS["date_range"].get_values(self.params),
+        start = cast(
+            date | None, self.database.fields["start_date"].get_values(self.params)
+        )
+        end = cast(
+            date | None, self.database.fields["end_date"].get_values(self.params)
         )
 
         if start and start < date(2008, 1, 1):
@@ -318,36 +239,17 @@ class SearchQuery:
         return messages
 
 
-class LeaderboardQuery:
-    ####################################################################################
-    # PUBLIC METHODS
+class LeaderboardQuery(Query):
+    def __init__(
+        self,
+        url: str,
+        database_name: str = "search",
+        fields: dict[str, Database] = STATCAST_FIELDS,
+        **kwargs: Param,
+    ):
+        super().__init__(url, database_name, fields, **kwargs)
 
-    def __init__(self, leaderboard_name: str, **kwargs: Param):
-        leaderboard = LEADERBOARD_FIELDS.get(leaderboard_name)
-
-        if not leaderboard:
-            raise FieldNameError(
-                field_name=leaderboard_name,
-                valid_values=LEADERBOARD_FIELDS.keys(),
-            )
-
-        self.leaderboard = leaderboard
-        self.params: dict[str, list[str]] = {}
-
-        for field_name, field_values in kwargs.items():
-            if not field_values:
-                continue
-
-            field = self.leaderboard.fields.get(field_name)
-
-            if not field:
-                raise FieldNameError(
-                    field_name=field_name, valid_values=SEARCH_FIELDS.keys()
-                )
-
-            self.params |= field.get_params(field_values)
-
-        if leaderboard.name == "swing_take":
+        if self.database.name == "swing_take":
             group = self.params["type"][0]
             subgroup = self.params.get("sub_type", [""])[0]
 
@@ -355,21 +257,8 @@ class LeaderboardQuery:
                 raise InvalidSubgroupError(
                     group=group,
                     subgroup=subgroup,
-                    leaderboard=self.leaderboard.name,
+                    leaderboard=self.database.name,
                     valid_values=_SWING_TAKE_GROUPS.get(group, None),
                 )
 
         self.params["csv"] = ["true"]
-
-    def request(self, **kwargs) -> pl.DataFrame:
-        output = io.StringIO()
-
-        output = download_file(
-            url=f"{LEADERBOARD_URL}/{self.leaderboard.slug}",
-            output=output,
-            params=self.params,
-            request_name="Statcast Leaderboard",
-            **kwargs,
-        )
-
-        return pl.read_csv(output, parse_dates=True, ignore_errors=True).fill_nan(None)
