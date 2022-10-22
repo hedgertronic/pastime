@@ -120,8 +120,6 @@ def download_files(
             total=None,
         )
 
-        actual_length = 0
-
         with closing(
             requests.get(url=url, timeout=180, stream=True, **kwargs)
         ) as response:
@@ -135,13 +133,7 @@ def download_files(
                 output.write(line + "\n")
                 current_app_progress.update(task_id, advance=len(line))
 
-                actual_length += len(line)
-
             current_app_progress.update(task_id, completed=total_length)
-
-        current_app_progress.update(
-            task_id, total=actual_length, completed=actual_length
-        )
 
         current_app_progress.stop_task(task_id)
         current_app_progress.update(task_id, description="[bold green]File downloaded!")
