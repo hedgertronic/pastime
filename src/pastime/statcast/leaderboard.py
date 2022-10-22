@@ -3,6 +3,9 @@ import polars as pl
 from pastime.statcast.query import LeaderboardQuery
 
 
+URL = "https://baseballsavant.mlb.com/leaderboard"
+
+
 def exit_velocity(
     player_type: str = "batters",
     position: str | None = None,
@@ -10,14 +13,14 @@ def exit_velocity(
     season: str | None = None,
     minimum_bbe: str = "qualified",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="exit_velocity",
         player_type=player_type,
         position=position,
         team=team,
         season=season,
         minimum_bbe=minimum_bbe,
-    ).request()
+    )
 
 
 def expected_stats(
@@ -27,14 +30,14 @@ def expected_stats(
     season: str | int = 2022,
     minimum_bip: str = "qualified",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="expected_stats",
         player_type=player_type,
         position=position,
         team=team,
         season=season,
         minimum_bip=minimum_bip,
-    ).request()
+    )
 
 
 def percentile_rankings(
@@ -42,12 +45,12 @@ def percentile_rankings(
     team: str | None = None,
     season: str | int = 2022,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="percentile_rankings",
         player_type=player_type,
         team=team,
         season=season,
-    ).request()
+    )
 
 
 def swing_take(
@@ -58,7 +61,7 @@ def swing_take(
     team: str | None = None,
     min_pitches: str = "qualified",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="swing_take",
         season=season,
         player_type=player_type,
@@ -66,7 +69,7 @@ def swing_take(
         subgroup=subgroup,
         team=team,
         min_pitches=min_pitches,
-    ).request()
+    )
 
 
 def pitch_arsenals(
@@ -75,13 +78,13 @@ def pitch_arsenals(
     handedness: str | None = None,
     min_pitches: str | int = 250,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="pitch_arsenals",
         season=season,
         metric=metric,
         handedness=handedness,
         min_pitches=min_pitches,
-    ).request()
+    )
 
 
 def pitch_arsenal_stats(
@@ -91,14 +94,14 @@ def pitch_arsenal_stats(
     season: str | int = 2022,
     min_pa: str | int = 10,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="pitch_arsenal_stats",
         player_type=player_type,
         pitch_type=pitch_type,
         team=team,
         season=season,
         min_pa=min_pa,
-    ).request()
+    )
 
 
 def home_runs(
@@ -107,13 +110,13 @@ def home_runs(
     team: str | None = None,
     min_hr: str | int = 0,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="home_runs",
         season=season,
         player_type=player_type,
         team=team,
         min_hr=min_hr,
-    ).request()
+    )
 
 
 def year_to_year_changes(
@@ -121,12 +124,12 @@ def year_to_year_changes(
     stat_type: str = "hard hit %",
     year_pair: str = "2021-2022",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="year_to_year_changes",
         player_type=player_type,
         stat_type=stat_type,
         year_pair=year_pair,
-    ).request()
+    )
 
 
 def pitch_tempo(
@@ -137,7 +140,7 @@ def pitch_tempo(
     end_season: str | int = 2022,
     split_seasons: bool = False,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="pitch_tempo",
         player_type=player_type,
         min_pitches=min_pitches,
@@ -146,7 +149,7 @@ def pitch_tempo(
         end_season=end_season,
         split_seasons="yes" if split_seasons else "no",
         with_team_only="1",
-    ).request()
+    )
 
 
 def pitch_movement(
@@ -156,14 +159,14 @@ def pitch_movement(
     handedness: str | None = None,
     min_pitches: str = "qualified",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="pitch_movement",
         season=season,
         pitch_type=pitch_type,
         team=team,
         handedness=handedness,
         min_pitches=min_pitches,
-    ).request()
+    )
 
 
 def active_spin(
@@ -171,12 +174,12 @@ def active_spin(
     handedness: str | None = None,
     min_pitches: str | int = 50,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="active_spin",
         season=season,
         handedness=handedness,
         min_pitches=min_pitches,
-    ).request()
+    )
 
 
 def spin_direction_comparison(
@@ -186,14 +189,14 @@ def spin_direction_comparison(
     min_pitches: str | int = 100,
     pov: str = "pitcher",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="spin_direction_comparison",
         season=season,
         team=team,
         pitch_types=pitch_types,
         min_pitches=min_pitches,
         pov=pov,
-    ).request()
+    )
 
 
 def spin_direction(
@@ -204,7 +207,7 @@ def spin_direction(
     min_pitches: str | int = 100,
     pov: str = "pitcher",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="spin_direction",
         season=season,
         team=team,
@@ -212,7 +215,7 @@ def spin_direction(
         handedness=handedness,
         min_pitches=min_pitches,
         pov=pov,
-    ).request()
+    )
 
 
 def oaa(
@@ -226,7 +229,7 @@ def oaa(
     end_season: str | int = 2022,
     split_seasons: bool = False,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="oaa",
         player_type=player_type,
         min_attempts=min_attempts,
@@ -238,7 +241,7 @@ def oaa(
         end_season=end_season,
         split_seasons="yes" if split_seasons else "no",
         visual="hide",
-    ).request()
+    )
 
 
 def of_directional_oaa(
@@ -246,12 +249,12 @@ def of_directional_oaa(
     team: str | None = None,
     season: str | int = 2022,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="of_directional_oaa",
         min_opportunities=min_opportunities,
         team=team,
         season=season,
-    ).request()
+    )
 
 
 def of_catch_probability(
@@ -260,24 +263,24 @@ def of_catch_probability(
     play_type: str = "all plays",
     season: str | int = 2022,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="of_catch_probability",
         type="team" if by_team else "player",
         min_opportunities=min_opportunities,
         play_type=play_type,
         season=season,
-    ).request()
+    )
 
 
 def outfield_jump(
     season: str | int = 2022,
     min_attempts: str = "qualifed",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="outfield_jump",
         season=season,
         min_attempts=min_attempts,
-    ).request()
+    )
 
 
 def poptime(
@@ -286,13 +289,13 @@ def poptime(
     min_attempts_2b: str | int = 5,
     min_attempts_3b: str | int = 0,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="poptime",
         team=team,
         season=season,
         min_attempts_2b=min_attempts_2b,
         min_attempts_3b=min_attempts_3b,
-    ).request()
+    )
 
 
 def framing(
@@ -301,13 +304,13 @@ def framing(
     season: str | int = 2022,
     min_pitches: str = "qualified",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="framing",
         player_type=player_type,
         team=team,
         season=season,
         min_pitches=min_pitches,
-    ).request()
+    )
 
 
 def arm_strength(
@@ -316,13 +319,13 @@ def arm_strength(
     season: str | int = 2022,
     min_throws: str | int = 100,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="arm_strength",
         position=position,
         team=team,
         season=season,
         min_throws=min_throws,
-    ).request()
+    )
 
 
 def sprint_speed(
@@ -332,14 +335,14 @@ def sprint_speed(
     end_season: str | int = 2022,
     min_opportunities: str | int = 10,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="sprint_speed",
         position=position,
         team=team,
         start_season=start_season,
         end_season=end_season,
         min_opportunities=min_opportunities,
-    ).request()
+    )
 
 
 def running_splits(
@@ -350,7 +353,7 @@ def running_splits(
     min_opportunities: str | int = 5,
     percentile: bool = False,
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="running_splits",
         position=position,
         team=team,
@@ -358,7 +361,7 @@ def running_splits(
         bat_side=bat_side,
         min_opportunities=min_opportunities,
         type="percent" if percentile else "raw",
-    ).request()
+    )
 
 
 def park_factors(
@@ -369,7 +372,7 @@ def park_factors(
     three_year_rolling: bool = False,
     stat: str = "woba",
 ) -> pl.DataFrame:
-    return LeaderboardQuery(
+    return query(
         leaderboard_name="park_factors",
         factor_type=factor_type,
         season=season,
@@ -377,4 +380,12 @@ def park_factors(
         condition=condition,
         three_year_rolling="" if three_year_rolling else "no",
         stat=stat,
+    )
+
+
+def query(leaderboard_name: str, **kwargs):
+    result = LeaderboardQuery(
+        url=URL, database_name=leaderboard_name, **kwargs
     ).request()
+
+    return pl.read_csv(result, parse_dates=True, ignore_errors=True).fill_nan(None)

@@ -2,8 +2,25 @@ from datetime import date
 
 import polars as pl
 
-from pastime.statcast.field import Param
+from pastime.field import Param
+from pastime.statcast.analysis import compute_spin_columns
 from pastime.statcast.query import SearchQuery
+
+
+URL = "https://baseballsavant.mlb.com/statcast_search/csv?"
+
+
+DEPRECATED_COLUMNS = [
+    "spin_dir",
+    "spin_rate_deprecated",
+    "break_angle_deprecated",
+    "break_length_deprecated",
+    "tfs_deprecated",
+    "tfs_zulu_deprecated",
+    "umpire",
+    "pitcher_duplicated_0",
+    "fielder_2_duplicated_0",
+]
 
 
 def season(
@@ -131,19 +148,18 @@ def team(
 def query(
     update_seasons: bool = True,
     add_spin_columns: bool = True,
-    *,
-    start_date: str | date | None = None,
-    end_date: str | date | None = None,
     **kwargs,
 ) -> pl.DataFrame:
-    if (start_date or end_date) and kwargs.get("date_range"):
-        raise ValueError("Cannot specify both start/end date and date range.")
-
-    search_query = SearchQuery(date_range=[start_date, end_date], **kwargs)
+    search_query = SearchQuery(url=URL, **kwargs)
 
     if update_seasons:
         search_query.update_seasons()
 
-    return search_query.request(
-        add_spin_columns=add_spin_columns,
+    data = (
+        pl.read_csv(search_query.request(), parse_dates=True, ignore_errors=True)
+        .drop_nulls(subset="game_date")
+        .drop(DEPRECATED_COLUMNS)
+        .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
     )
+
+    return compute_spin_columns(data) if add_spin_columns else data
