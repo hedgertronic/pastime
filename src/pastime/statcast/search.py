@@ -3,7 +3,7 @@ from datetime import date
 import polars as pl
 
 from pastime.field import Param
-from pastime.statcast.analysis import compute_spin_columns
+from pastime.statcast.analysis import spin_columns
 from pastime.statcast.query import SearchQuery
 
 
@@ -162,4 +162,4 @@ def query(
         .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
     )
 
-    return compute_spin_columns(data) if add_spin_columns else data
+    return spin_columns(data) if add_spin_columns else data
