@@ -4,12 +4,12 @@ from typing import Iterable, Sequence, Type
 
 
 class FieldNameError(ValueError):
-    def __init__(self, field_name: str, valid_values: Iterable[str]):
+    def __init__(self, field_name: str, valid_values: Iterable[str] = None):
         message = f"'{field_name}'"
 
-        close_matches = get_close_matches(field_name, valid_values)
-
-        if close_matches:
+        if valid_values and (
+            close_matches := get_close_matches(field_name, valid_values)
+        ):
             close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
             message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
 
@@ -17,12 +17,12 @@ class FieldNameError(ValueError):
 
 
 class FieldValueError(ValueError):
-    def __init__(self, value: str, field_name: str, valid_values: Iterable[str]):
+    def __init__(self, value: str, field_name: str, valid_values: Iterable[str] = None):
         message = f"'{value}' for field '{field_name}'"
 
-        close_matches = get_close_matches(value, valid_values)
-
-        if close_matches:
+        if valid_values and (
+            close_matches := get_close_matches(field_name, valid_values)
+        ):
             close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
             message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
 
