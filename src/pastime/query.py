@@ -28,9 +28,6 @@ class Query:
         self.requests_to_make: list[dict[str, list[str]]] = []
 
         for field_name, field_values in kwargs.items():
-            if not field_values:
-                continue
-
             field = self.database.fields.get(field_name)
 
             if not field:
