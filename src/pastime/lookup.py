@@ -5,6 +5,7 @@ import pkg_resources
 import polars as pl
 
 from pastime.download import download_file
+from pastime.exceptions import IdNotFoundError, NameNotFoundError
 
 
 #######################################################################################
@@ -28,32 +29,6 @@ LOOKUP_COLUMNS = [
     "mlb_played_first",
     "mlb_played_last",
 ]
-
-
-#######################################################################################
-# LOOKUP EXCEPTIONS
-
-
-class NameNotFoundError(ValueError):
-    def __init__(self, player_name: str):
-        message = (
-            f"'{player_name}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
-
-        super().__init__(message)
-
-
-class IdNotFoundError(ValueError):
-    def __init__(self, player_id: str | int):
-        message = (
-            f"'{player_id}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
-
-        super().__init__(message)
 
 
 #######################################################################################

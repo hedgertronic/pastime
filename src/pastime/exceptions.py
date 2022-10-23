@@ -3,6 +3,10 @@ from difflib import get_close_matches
 from typing import Iterable, Sequence, Type
 
 
+#######################################################################################
+# FIELD EXCEPTIONS
+
+
 class FieldNameError(ValueError):
     def __init__(self, field_name: str, valid_values: Iterable[str] = None):
         message = f"'{field_name}'"
@@ -44,7 +48,7 @@ class FieldTypeError(TypeError):
         super().__init__(message)
 
 
-class TooManyValuesError(TypeError):
+class TooManyValuesError(ValueError):
     def __init__(
         self,
         values: Sequence[str | int | float | date | None],
@@ -94,5 +98,31 @@ class InvalidSubgroupError(ValueError):
 
         else:
             message += f"{None}"
+
+        super().__init__(message)
+
+
+#######################################################################################
+# LOOKUP EXCEPTIONS
+
+
+class NameNotFoundError(ValueError):
+    def __init__(self, player_name: str):
+        message = (
+            f"'{player_name}'."
+            " If you think the lookup table may be out of date, you can refresh it by"
+            " including 'refresh=True' in your function call."
+        )
+
+        super().__init__(message)
+
+
+class IdNotFoundError(ValueError):
+    def __init__(self, player_id: str | int):
+        message = (
+            f"'{player_id}'."
+            " If you think the lookup table may be out of date, you can refresh it by"
+            " including 'refresh=True' in your function call."
+        )
 
         super().__init__(message)
