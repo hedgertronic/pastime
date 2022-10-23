@@ -78,7 +78,7 @@ def download_files(
     params: Sequence[dict[str, list[str]]],
     request_name: str | None = None,
     messages: Sequence[str] = None,
-    **kwargs: Sequence[Any],
+    **kwargs: Any,
 ) -> io.StringIO:
     output = io.StringIO()
 
