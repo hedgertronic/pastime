@@ -156,7 +156,7 @@ class MultiSelectField(Field):
         return frequency_sum if frequency_sum <= 1.0 else 1.0
 
 
-class PlayerLookupField(Field):
+class PlayerField(Field):
     def get_params(self, values: Param) -> dict[str, list[str]]:
         values = self.validate_values(values)
 
@@ -241,7 +241,7 @@ class DateField(Field):
 
 
 @dataclass
-class MetricRangeField(Field):
+class MetricField(Field):
     min_value: int | None = None
     max_value: int | None = None
 
@@ -393,9 +393,9 @@ class Database:
 FIELD_TYPES = {
     "single-select": SingleSelectField,
     "multi-select": MultiSelectField,
-    "player-lookup": PlayerLookupField,
+    "player-lookup": PlayerField,
     "date-range": DateField,
-    "metric-range": MetricRangeField,
+    "metric-range": MetricField,
 }
 
 

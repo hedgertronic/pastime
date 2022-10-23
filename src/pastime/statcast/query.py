@@ -9,7 +9,7 @@ from pastime.field import (
     Database,
     DateField,
     Field,
-    MetricRangeField,
+    MetricField,
 )
 from pastime.query import Query
 from pastime.type_aliases import Param
@@ -124,7 +124,7 @@ class SearchQuery(Query):
         if isinstance(field, DateField):
             pass
 
-        elif isinstance(field, MetricRangeField):
+        elif isinstance(field, MetricField):
             new_params[f"metric_{self.metric_counter}"] = new_params.pop(
                 "metric_{counter}"
             )
