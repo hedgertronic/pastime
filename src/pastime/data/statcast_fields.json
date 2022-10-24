@@ -221,8 +221,8 @@
                 },
                 "field_type": "single-select"
             },
-            "min_num_of_total_pitches": {
-                "name": "min_num_of_total_pitches",
+            "min_pitches": {
+                "name": "min_pitches",
                 "slug": "min_pitches",
                 "choices": {
                     "default": "0",
@@ -250,8 +250,8 @@
                 },
                 "field_type": "single-select"
             },
-            "min_num_of_results": {
-                "name": "min_num_of_results",
+            "min_results": {
+                "name": "min_results",
                 "slug": "min_results",
                 "choices": {
                     "default": "0",
@@ -338,8 +338,8 @@
                 },
                 "field_type": "single-select"
             },
-            "player_and_event_sort": {
-                "name": "player_and_event_sort",
+            "player_event_sort": {
+                "name": "player_event_sort",
                 "slug": "player_event_sort",
                 "choices": {
                     "default": "h_launch_speed",
@@ -408,8 +408,8 @@
                 },
                 "field_type": "single-select"
             },
-            "type": {
-                "name": "type",
+            "data_type": {
+                "name": "data_type",
                 "slug": "type",
                 "choices": {
                     "default": "details",
@@ -417,8 +417,8 @@
                 },
                 "field_type": "single-select"
             },
-            "all": {
-                "name": "all",
+            "get_all": {
+                "name": "get_all",
                 "slug": "all",
                 "choices": {
                     "default": "true",
@@ -814,8 +814,8 @@
                 },
                 "field_type": "multi-select"
             },
-            "season": {
-                "name": "season",
+            "year": {
+                "name": "year",
                 "slug": "hfSea",
                 "choices": {
                     "default": "2022",
