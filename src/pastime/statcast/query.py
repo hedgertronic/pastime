@@ -2,15 +2,8 @@ import io
 from datetime import date, timedelta
 from typing import cast
 
-from pastime.exceptions import InvalidSubgroupError, RangeValidationError
-from pastime.field import (
-    DEFAULT_SEARCH_PARAMS,
-    STATCAST_FIELDS,
-    Database,
-    DateField,
-    Field,
-    MetricField,
-)
+from pastime.exceptions import InvalidBoundError, InvalidSubgroupError
+from pastime.field import STATCAST_FIELDS, Collection, DateField, Field, MetricField
 from pastime.query import Query
 from pastime.type_aliases import Param
 
@@ -73,30 +66,28 @@ class SearchQuery(Query):
     def __init__(
         self,
         url: str,
-        database_name: str = "search",
-        fields: dict[str, Database] = STATCAST_FIELDS,
+        collection_name: str = "search",
+        fields: dict[str, Collection] = STATCAST_FIELDS,
         **kwargs: Param,
     ):
         self.frequency = 1.0
         self.metric_counter = 1
         self.requests_to_make: list[dict[str, list[str]]] = []
 
-        super().__init__(url, database_name, fields, **kwargs)
-
-        self.params = DEFAULT_SEARCH_PARAMS | self.params
+        super().__init__(url, collection_name, fields, **kwargs)
 
         self._update_dates()
 
     def update_seasons(self) -> None:
-        season_field = self.database.fields["season"]
+        season_field = self.collection.fields["year"]
 
         seasons = cast(list[str], season_field.get_values(self.params))
 
         start = cast(
-            date | None, self.database.fields["start_date"].get_values(self.params)
+            date | None, self.collection.fields["start_date"].get_values(self.params)
         )
         end = cast(
-            date | None, self.database.fields["end_date"].get_values(self.params)
+            date | None, self.collection.fields["end_date"].get_values(self.params)
         )
 
         self._add_param(
@@ -125,15 +116,9 @@ class SearchQuery(Query):
             pass
 
         elif isinstance(field, MetricField):
-            new_params[f"metric_{self.metric_counter}"] = new_params.pop(
-                "metric_{counter}"
-            )
-            new_params[f"metric_{self.metric_counter}_gt"] = new_params.pop(
-                "metric_{counter}_gt"
-            )
-            new_params[f"metric_{self.metric_counter}_lt"] = new_params.pop(
-                "metric_{counter}_lt"
-            )
+            new_params[f"metric_{self.metric_counter}"] = new_params.pop("metric")
+            new_params[f"metric_{self.metric_counter}_gt"] = new_params.pop("metric_gt")
+            new_params[f"metric_{self.metric_counter}_lt"] = new_params.pop("metric_lt")
 
             self.metric_counter += 1
 
@@ -141,11 +126,11 @@ class SearchQuery(Query):
         self.frequency *= field.get_frequency(self.params)
 
     def _update_dates(self) -> None:
-        start_field = self.database.fields["start_date"]
-        end_field = self.database.fields["end_date"]
+        start_field = self.collection.fields["start_date"]
+        end_field = self.collection.fields["end_date"]
 
         seasons = cast(
-            list[str], self.database.fields["season"].get_values(self.params)
+            list[str], self.collection.fields["year"].get_values(self.params)
         )
 
         start = (
@@ -158,7 +143,7 @@ class SearchQuery(Query):
         )
 
         if start > end:
-            raise RangeValidationError(min_value=str(start), max_value=str(end))
+            raise InvalidBoundError(min_value=str(start), max_value=str(end))
 
         self._add_param(start_field, start)
         self._add_param(end_field, end)
@@ -177,8 +162,8 @@ class SearchQuery(Query):
     def _get_date_pairs(self) -> list[tuple[str, str]]:
         date_pairs: list[tuple[str, str]] = []
 
-        start = cast(date, self.database.fields["start_date"].get_values(self.params))
-        end = cast(date, self.database.fields["end_date"].get_values(self.params))
+        start = cast(date, self.collection.fields["start_date"].get_values(self.params))
+        end = cast(date, self.collection.fields["end_date"].get_values(self.params))
 
         est_rows = PITCHES_PER_YEAR * self.frequency
 
@@ -213,10 +198,10 @@ class SearchQuery(Query):
         messages = []
 
         start = cast(
-            date | None, self.database.fields["start_date"].get_values(self.params)
+            date | None, self.collection.fields["start_date"].get_values(self.params)
         )
         end = cast(
-            date | None, self.database.fields["end_date"].get_values(self.params)
+            date | None, self.collection.fields["end_date"].get_values(self.params)
         )
 
         if start and start < date(2008, 1, 1):
@@ -243,13 +228,13 @@ class LeaderboardQuery(Query):
     def __init__(
         self,
         url: str,
-        database_name: str = "search",
-        fields: dict[str, Database] = STATCAST_FIELDS,
+        collection_name: str = "search",
+        fields: dict[str, Collection] = STATCAST_FIELDS,
         **kwargs: Param,
     ):
-        super().__init__(url, database_name, fields, **kwargs)
+        super().__init__(url, collection_name, fields, **kwargs)
 
-        if self.database.name == "swing_take":
+        if self.collection.name == "swing_take":
             group = self.params["type"][0]
             subgroup = self.params.get("sub_type", [""])[0]
 
@@ -257,7 +242,7 @@ class LeaderboardQuery(Query):
                 raise InvalidSubgroupError(
                     group=group,
                     subgroup=subgroup,
-                    leaderboard=self.database.name,
+                    leaderboard=self.collection.name,
                     valid_values=_SWING_TAKE_GROUPS.get(group, None),
                 )
 

@@ -385,7 +385,7 @@ def park_factors(
 
 def query(leaderboard_name: str, **kwargs):
     result = LeaderboardQuery(
-        url=URL, database_name=leaderboard_name, **kwargs
+        url=URL, collection_name=leaderboard_name, **kwargs
     ).request()
 
     return pl.read_csv(result, parse_dates=True, ignore_errors=True).fill_nan(None)
