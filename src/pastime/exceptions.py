@@ -63,14 +63,44 @@ class TooManyValuesError(ValueError):
         super().__init__(message)
 
 
-class RangeValidationError(ValueError):
+class InvalidBoundError(ValueError):
     def __init__(
         self,
         min_value: str | int | float,
         max_value: str | int | float,
         field_name: str = None,
     ):
-        message = f"Min value '{min_value}' > max value '{max_value}'"
+        message = f"Lower bound '{min_value}' > upper bound '{max_value}'"
+
+        if field_name:
+            message += f" for field '{field_name}'"
+
+        super().__init__(message)
+
+
+class LessThanLowerBoundError(ValueError):
+    def __init__(
+        self,
+        value: str | int | float | date,
+        lower_bound: str | int | float | date,
+        field_name: str = None,
+    ):
+        message = f"'{value}' < lower bound '{lower_bound}'"
+
+        if field_name:
+            message += f" for field '{field_name}'"
+
+        super().__init__(message)
+
+
+class MoreThanUpperBoundError(ValueError):
+    def __init__(
+        self,
+        value: str | int | float | date,
+        upper_bound: str | int | float | date,
+        field_name: str = None,
+    ):
+        message = f"'{value}' < upper bound '{upper_bound}'"
 
         if field_name:
             message += f" for field '{field_name}'"
