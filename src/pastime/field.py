@@ -10,6 +10,7 @@ Attributes:
     FANGRAPHS_FIELDS (dict[str, Collection]): A mapping of collection names to their
         respective Fangraphs field collections.
 """
+
 from __future__ import annotations
 
 import json
@@ -208,7 +209,7 @@ class MultiSelectField(Field):
         delimiter (str): Character used to separate choices in query string. Defaults
             to a pipe, the Statcast search standard.
         add_trailing_delimter (bool): Whether an extra delimiter should be placed at
-            the end of the query string. Defaults to true, the Statcast search
+            the end of the query string. Defaults to True, the Statcast search
             standard.
 
     Raises:
@@ -395,8 +396,8 @@ class DateField(Field):
         frequencies (dict[str, float], optional): Estimated frequencies for choices
             used to break up requests if needed. This will always be empty for this
             field.
-        date_format (str): Format to use to parse dates. Default to ISO 8601 format
-            (`YYYY-MM-DD`).
+        date_format (str, optional): Format to use to parse dates. Default to ISO 8601
+            format (`YYYY-MM-DD`).
         min_value (str, optional): Minimum date value to accept.
         max_value (str, optional): Maximum date value to accept.
         all_dates_slug (str, optional): Slug to use when all dates are chosen.
