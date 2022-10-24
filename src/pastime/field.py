@@ -1,54 +1,137 @@
+"""Store data for fields used for making query requests.
+
+This module provides classes that simplify interacting with field data.
+
+Attributes:
+    FIELD_TYPES (dict[str, Field]): A mapping of field names to the actual field
+        classes for easier construction.
+    STATCAST_FIELDS (dict[str, Collection]): A mapping of collection names to their
+        respective Statcast field collections.
+    FANGRAPHS_FIELDS (dict[str, Collection]): A mapping of collection names to their
+        respective Fangraphs field collections.
+"""
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Sequence
+from typing import Any, NamedTuple, Sequence, Type
 
 import numpy as np
 import pkg_resources
 
 from pastime.exceptions import (
-    FieldNameError,
     FieldTypeError,
     FieldValueError,
-    RangeValidationError,
+    InvalidBoundError,
+    LessThanLowerBoundError,
+    MoreThanUpperBoundError,
     TooManyValuesError,
 )
 from pastime.lookup import lookup_id
 from pastime.type_aliases import Param, ParamComponent
 
 
+#######################################################################################
+# FIELD CLASSES
+
+
 @dataclass
 class Field:
+    """A base class for a field.
+
+    Attributes:
+        name (str): Name of the field.
+        slug (str): URL slug of the field.
+        field_type (str): Type of the field.
+        choices (dict[str, str], optional): Choices that are valid for the field.
+        frequencies (dict[str, float], optional): Estimated frequencies for choices
+            used to break up requests if needed. A base Field class only contains a
+            default frequency.
+    """
+
     name: str
     slug: str
     field_type: str
     choices: dict[str, str] = field(default_factory=dict)
     frequencies: dict[str, float] = field(default_factory=dict)
-    aliases: dict[str, list[str]] = field(default_factory=dict)
 
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        return {self.slug: [str(self.validate_values(values))]}
+        """Create dict of params that can be urlencoded in a Requests request.
+
+        Args:
+            values (Param): A list of values to put into a query string.
+
+        Returns:
+            dict[str, list[str]]: Dict mapping the slug of the field to a query string
+                of validated values.
+        """
+        return {self.slug: [str(self._validate_values(values))]}
 
     def get_values(self, params: dict[str, list[str]]) -> Param:
+        """Get values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            Param: Values that are mapped to the field's slug parsed from the dict of
+                query strings.
+        """
         return params[self.slug][0]
 
-    def validate_values(self, values: Param) -> Any:
-        return values
-
     def get_frequency(self, params: dict[str, list[str]]) -> float:
+        """Get frequency of values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            float: Total frequency of values that are mapped to the field's slug from
+                the dict of query strings.
+        """
         return self.frequencies.get("default", 1.0) if params.get(self.slug) else 1.0
+
+    def _validate_values(self, values: Param) -> Param:
+        """Confirm the type and structure of a given value."""
+        return values
 
 
 class SingleSelectField(Field):
+    """A field that accepts a single value.
+
+    Attributes:
+        name (str): Name of the field.
+        slug (str): URL slug of the field.
+        field_type (str): Type of the field.
+        choices (dict[str, str], optional): Choices that are valid for the field.
+        frequencies (dict[str, float], optional): Estimated frequencies for choices
+            used to break up requests if needed.
+
+    Raises:
+        FieldValueError: If a given value is not a valid choice or alias.
+        TooManyValuesError: If more than one value is provided.
+    """
+
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        value = self.validate_values(values)
+        """Create dict of params that can be urlencoded in a Requests request.
+
+        A SingleSelectField only accepts one value.
+
+        Args:
+            values (Param): A value to put into a query string.
+
+        Returns:
+            dict[str, list[str]]: Dict mapping the slug of the field to a query
+                string of a validated value.
+        """
+        value = self._validate_values(values)
         param = self._get_param(value)
 
         return {self.slug: [param.replace(".", r"\.")]}
 
     def _get_param(self, value: str) -> str:
+        """Confirm whether a value is a valid choice or alias."""
         param = ""
 
         if not value:
@@ -68,9 +151,33 @@ class SingleSelectField(Field):
         return param
 
     def get_values(self, params: dict[str, list[str]]) -> str:
+        """Get value from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            Param: Value that is mapped to the field's slug parsed from the dict of
+                query strings.
+        """
         return params[self.slug][0].replace(r"\.", ".")
 
-    def validate_values(self, values: Param) -> str:
+    def get_frequency(self, params: dict[str, list[str]]) -> float:
+        """Get frequency of values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            float: Total frequency of values that are mapped to the field's slug from
+                the dict of query strings.
+        """
+        return self.frequencies.get(
+            self.get_values(params), self.frequencies.get("default", 1.0)
+        )
+
+    def _validate_values(self, values: Param) -> str:
+        """Confirm the type and structure of a given value."""
         if (
             not isinstance(values, str)
             and isinstance(values, Sequence)
@@ -83,19 +190,48 @@ class SingleSelectField(Field):
 
         return str(values) if values else ""
 
-    def get_frequency(self, params: dict[str, list[str]]) -> float:
-        return self.frequencies.get(
-            self.get_values(params), self.frequencies.get("default", 1.0)
-        )
-
 
 @dataclass
 class MultiSelectField(Field):
+    """A field that accepts multiple values.
+
+    Attributes:
+        name (str): Name of the field.
+        slug (str): URL slug of the field.
+        field_type (str): Type of the field.
+        choices (dict[str, str], optional): Choices that are valid for the field.
+        frequencies (dict[str, float], optional): Estimated frequencies for choices
+            used to break up requests if needed.
+        aliases (dict[str, list[str]], optional): A list of aliases that represent
+            multiple choices, used for grouping together choices that intuitively
+            go together.
+        delimiter (str): Character used to separate choices in query string. Defaults
+            to a pipe, the Statcast search standard.
+        add_trailing_delimter (bool): Whether an extra delimiter should be placed at
+            the end of the query string. Defaults to true, the Statcast search
+            standard.
+
+    Raises:
+        FieldValueError: If a given value is not a valid choice or alias.
+    """
+
+    aliases: dict[str, list[str]] = field(default_factory=dict)
     delimiter: str = "|"
     add_trailing_delimiter: bool = True
 
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        valid_values = self.validate_values(values)
+        """Create dict of params that can be urlencoded in a Requests request.
+
+        A MultiSelectField accepts multiple values.
+
+        Args:
+            values (Param): A list of values to put into a query string.
+
+        Returns:
+            dict[str, list[str]]: Dict mapping the slug of the field to a query string
+                of validated values.
+        """
+        valid_values = self._validate_values(values)
 
         params: set[str] = set()
 
@@ -112,6 +248,7 @@ class MultiSelectField(Field):
         }
 
     def _get_param(self, value: str) -> set[str]:
+        """Confirm whether a value is a valid choice or alias."""
         params = set()
 
         if not value:
@@ -134,18 +271,27 @@ class MultiSelectField(Field):
         return params
 
     def get_values(self, params: dict[str, list[str]]) -> list[str]:
+        """Get values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            Param: Values that are mapped to the field's slug parsed from the dict of
+                query strings.
+        """
         return params[self.slug][0].replace(r"\.", ".").split("|")[:-1]
 
-    def validate_values(self, values: Param) -> Sequence[str]:
-        if not values:
-            values = [""]
-
-        elif isinstance(values, str | int | float | date):
-            values = [str(values)]
-
-        return [str(value) for value in values]
-
     def get_frequency(self, params: dict[str, list[str]]) -> float:
+        """Get frequency of values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            float: Total frequency of values that are mapped to the field's slug from
+                the dict of query strings.
+        """
         default_frequency = self.frequencies.get("default", 1.0)
 
         frequency_sum = sum(
@@ -155,17 +301,78 @@ class MultiSelectField(Field):
 
         return frequency_sum if frequency_sum <= 1.0 else 1.0
 
+    def _validate_values(self, values: Param) -> Sequence[str]:
+        """Confirm the type and structure of a given value."""
+        if not values:
+            values = [""]
+
+        elif isinstance(values, str | int | float | date):
+            values = [str(values)]
+
+        return [str(value) for value in values]
+
 
 class PlayerField(Field):
+    """A field that accepts player ID values.
+
+    Attributes:
+        name (str): Name of the field.
+        slug (str): URL slug of the field.
+        field_type (str): Type of the field.
+        choices (dict[str, str], optional): Choices that are valid for the field. This
+            will always be empty for this field.
+        frequencies (dict[str, float], optional): Estimated frequencies for choices
+            used to break up requests if needed. This will always be empty for this
+            field.
+
+    Raises:
+        IdNotFoundError: If a given value is not a valid player ID.
+    """
+
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        values = self.validate_values(values)
+        """Create dict of params that can be urlencoded in a Requests request.
+
+        A PlayerField accepts multiple values.
+
+        Args:
+            values (Param): A list of values to put into a query string.
+
+        Returns:
+            dict[str, list[str]]: Dict mapping the slug of the field to a query string
+                of validated player ID values.
+        """
+        values = self._validate_values(values)
 
         return {self.slug: [str(value) for value in sorted(values) if value]}
 
     def get_values(self, params: dict[str, list[str]]) -> list[str]:
+        """Get values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            Param: Values that are mapped to the field's slug parsed from the dict of
+                query strings.
+        """
         return params[self.slug]
 
-    def validate_values(self, values: Param) -> Sequence[str]:
+    def get_frequency(self, params: dict[str, list[str]]) -> float:
+        """Get frequency of values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            float: Total frequency of values that are mapped to the field's slug from
+                the dict of query strings.
+        """
+        total = 0.01 * len(self.get_values(params))
+
+        return total if total < 1.0 else 1.0
+
+    def _validate_values(self, values: Param) -> Sequence[str]:
+        """Confirm the type and structure of a given value."""
         if not values:
             values = [""]
 
@@ -174,30 +381,71 @@ class PlayerField(Field):
 
         return [str(value) for value in values if not lookup_id(str(value)).is_empty()]
 
-    def get_frequency(self, params: dict[str, list[str]]) -> float:
-        total = 0.01 * len(self.get_values(params))
-
-        return total if total < 1.0 else 1.0
-
 
 @dataclass
 class DateField(Field):
+    """A field that accepts date values.
+
+    Attributes:
+        name (str): Name of the field.
+        slug (str): URL slug of the field.
+        field_type (str): Type of the field.
+        choices (dict[str, str], optional): Choices that are valid for the field. This
+            will always be empty for this field.
+        frequencies (dict[str, float], optional): Estimated frequencies for choices
+            used to break up requests if needed. This will always be empty for this
+            field.
+        date_format (str): Format to use to parse dates. Default to ISO 8601 format
+            (`YYYY-MM-DD`).
+        min_value (str, optional): Minimum date value to accept.
+        max_value (str, optional): Maximum date value to accept.
+        all_dates_slug (str, optional): Slug to use when all dates are chosen.
+
+    Raises:
+        FieldTypeError: If a given value is not a date or date string.
+        TooManyValuesError: If more than one value is provided.
+        LessThanLowerBoundError: If a given value is less than the field's min value.
+        MoreThanUpperBoundError: If a given value is more than the field's max value.
+        ValueError: If a given value does not parse according to the date format.
+    """
+
     date_format: str = "%Y-%m-%d"
     min_value: str | None = None
     max_value: str | None = None
     all_dates_slug: str | None = None
 
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        value = self.validate_values(values)
+        """Create dict of params that can be urlencoded in a Requests request.
+
+        A DateField accepts multiple values.
+
+        Args:
+            values (Param): A value to put into a query string.
+
+        Returns:
+            dict[str, list[str]]: Dict mapping the slug of the field to a query string
+                of a validated date value.
+        """
+        value = self._validate_values(values)
 
         return {self.slug: [value.strftime(self.date_format) if value else ""]}
 
     def get_values(self, params: dict[str, list[str]]) -> date | None:
+        """Get values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            Param: Values that are mapped to the field's slug parsed from the dict of
+                query strings.
+        """
         param = params.get(self.slug, [""])[0]
 
         return datetime.strptime(param, self.date_format).date() if param else None
 
-    def validate_values(self, values: Param) -> date | None:
+    def _validate_values(self, values: Param) -> date | None:
+        """Confirm the type and structure of a given value."""
         if (
             not isinstance(values, str)
             and isinstance(values, Sequence)
@@ -219,6 +467,10 @@ class DateField(Field):
         elif isinstance(values, str | int):
             values = datetime.strptime(str(values), self.date_format).date()
 
+        return self._validate_date(values)
+
+    def _validate_date(self, values: date | None) -> date | None:
+        """Confirm the value of a given date value."""
         min_value = (
             datetime.strptime(str(self.min_value), self.date_format).date()
             if self.min_value
@@ -232,34 +484,81 @@ class DateField(Field):
         )
 
         if min_value and values and values < min_value:
-            raise FieldValueError(values.strftime(self.date_format), self.name)
+            raise LessThanLowerBoundError(
+                values.strftime(self.date_format), min_value, self.name
+            )
 
         if max_value and values and values > max_value:
-            raise FieldValueError(values.strftime(self.date_format), self.name)
+            raise MoreThanUpperBoundError(
+                values.strftime(self.date_format), max_value, self.name
+            )
 
         return values
 
 
 @dataclass
 class MetricField(Field):
+    """A field that accepts a lower and upper bound value.
+
+    Attributes:
+        name (str): Name of the field.
+        slug (str): URL slug of the field.
+        field_type (str): Type of the field.
+        choices (dict[str, str], optional): Choices that are valid for the field. This
+            will always be empty for this field.
+        frequencies (dict[str, float], optional): Estimated frequencies for choices
+            used to break up requests if needed. This will always be empty for this
+            field.
+        min_value (int, optional): Minimum metric value to accept.
+        max_value (int, optional): Maximum metric value to accept.
+
+    Raises:
+        FieldTypeError: If a given value is not an int, float, or a string that can be
+            parsed to an int or float.
+        TooManyValuesError: If more than two values are provided.
+        LessThanLowerBoundError: If a given value is less than the field's min value.
+        MoreThanUpperBoundError: If a given value is more than the field's max value.
+        InvalidBoundError: If the lower bound provided is higher than the upper bound
+            provided.
+    """
+
     min_value: int | None = None
     max_value: int | None = None
 
     def get_params(self, values: Param) -> dict[str, list[str]]:
-        values = self.validate_values(values)
+        """Create dict of params that can be urlencoded in a Requests request.
 
-        range_min = self.min_value if self.min_value is not None else np.NINF
-        range_max = self.max_value if self.max_value is not None else np.Inf
+        A MetricField accepts sequences of two items that represent a lower and upper
+        bound of the metric. A singular value can be provided as well, in which case
+        that value will be used as both the lower and upper bound.
 
-        min_value, max_value = self._get_range_extremes(values, range_min, range_max)
+        Args:
+            values (Param): One or two items to be put into a query string.
+
+        Returns:
+            dict[str, list[str]]: Dict mapping the slug of the field to a query string
+                of a validated metric value, along with additional slugs and query
+                strings for the lower and upper board of the metric.
+        """
+        values = self._validate_values(values)
+        min_value, max_value = self._get_range_extremes(values)
 
         return {
-            "metric_{counter}": [self.slug],
-            "metric_{counter}_gt": ([str(min_value) if min_value is not None else ""]),
-            "metric_{counter}_lt": ([str(max_value) if max_value is not None else ""]),
+            "metric": [self.slug],
+            "metric_gt": ([str(min_value) if min_value is not None else ""]),
+            "metric_lt": ([str(max_value) if max_value is not None else ""]),
         }
 
     def get_values(self, params: dict[str, list[str]]) -> tuple[str, str]:
+        """Get values from a dict of query strings.
+
+        Args:
+            params (dict[str, list[str]]): A dict of URL slugs to query strings.
+
+        Returns:
+            Param: Values that are mapped to the field's slug parsed from the dict of
+                query strings.
+        """
         counter = 1
 
         while param := params.get(f"metric_{counter}", [""])[0]:
@@ -273,12 +572,13 @@ class MetricField(Field):
 
         return "", ""
 
-    def validate_values(self, values: Param) -> tuple[float | None, float | None]:
+    def _validate_values(self, values: Param) -> tuple[float | None, float | None]:
+        """Confirm the type and structure of a given value."""
         if not values and values != 0:
             values = [None, None]
 
         elif isinstance(values, str) or not isinstance(values, Sequence):
-            value = self._validate_metric_value(values)
+            value = self._validate_metric(values)
             values = [value, value]
 
         elif isinstance(values, Sequence) and len(values) == 0:
@@ -287,16 +587,10 @@ class MetricField(Field):
         elif isinstance(values, Sequence) and len(values) > 2:
             raise TooManyValuesError(values=values, field_name=self.name, max_values=2)
 
-        return (
-            self._validate_metric_value(
-                values[0] if values[0] or values[0] == 0 else None
-            ),
-            self._validate_metric_value(
-                values[1] if values[1] or values[1] == 0 else None
-            ),
-        )
+        return (self._validate_metric(values[0]), self._validate_metric(values[1]))
 
-    def _validate_metric_value(self, value: ParamComponent) -> float | None:
+    def _validate_metric(self, value: ParamComponent) -> float | None:
+        """Confirm the type and value of a given metric value."""
         if not value and value != 0:
             value = None
 
@@ -315,82 +609,47 @@ class MetricField(Field):
     def _get_range_extremes(
         self,
         metric_values: tuple[float | None, float | None],
-        range_min: int | float,
-        range_max: int | float,
     ) -> tuple[float | None, float | None]:
-        min_value = (
-            np.clip(metric_values[0], range_min, range_max)
-            if metric_values[0] is not None
-            else None
-        )
+        """Get the min and max value from a given range."""
+        min_value = metric_values[0]
+        max_value = metric_values[1]
 
-        max_value = (
-            np.clip(metric_values[1], range_min, range_max)
-            if metric_values[1] is not None
-            else None
-        )
+        range_min = self.min_value if self.min_value is not None else np.NINF
+        range_max = self.max_value if self.max_value is not None else np.Inf
+
+        if min_value and min_value < range_min:
+            raise LessThanLowerBoundError(min_value, range_min, self.name)
+
+        if max_value and max_value > range_max:
+            raise MoreThanUpperBoundError(max_value, range_max, self.name)
 
         if min_value and max_value and float(min_value) > float(max_value):
-            raise RangeValidationError(
+            raise InvalidBoundError(
                 min_value=min_value, max_value=max_value, field_name=self.name
             )
 
         return min_value, max_value
 
 
-# Want object with collection of fields associated
-# SC Search: pitch_type, etc
-# Each SC Leaderboard has its own fields
-# Each FG Query has its own fields
-# class Leaderboard:
-#     def __init__(self, name: str, slug: str, fields: dict[str, dict[str, Any]]):
-#         self.name = name
-#         self.slug = slug
-#         self.fields: dict[str, Field] = construct_fields(fields)
+class Collection(NamedTuple):
+    """A collection of fields that are all related to the same query.
 
-#     def get_params(self, values: dict[str, Param]) -> dict[str, list[str]]:
-#         params: dict[str, list[str]] = {}
+    Args:
+        name (str): Name of the collection.
+        slug (str): URL slug of the collection.
+        fields (dict[str, Field]): Mapping of field names to Field objects.
+    """
 
-#         for field_name, value in values.items():
-#             field_obj = self.fields.get(field_name)
-
-#             if not field_obj:
-#                 raise FieldNameError(
-#                     field_name=field_name, valid_values=self.fields.keys()
-#                 )
-
-#             params |= field_obj.get_params(value)
-
-#         return params
-
-
-class Database:
-    def __init__(self, name: str, slug: str, fields: dict[str, dict[str, Any]]):
-        self.name = name
-        self.slug = slug
-        self.fields: dict[str, Field] = construct_fields(fields)
-
-    def get_params(self, values: dict[str, Param]) -> dict[str, list[str]]:
-        params: dict[str, list[str]] = {}
-
-        for field_name, value in values.items():
-            field_obj = self.fields.get(field_name)
-
-            if not field_obj:
-                raise FieldNameError(
-                    field_name=field_name, valid_values=self.fields.keys()
-                )
-
-            params |= field_obj.get_params(value)
-
-        return params
+    name: str
+    slug: str
+    fields: dict[str, Field]
 
 
 #######################################################################################
-# FIELD DATA
+# FIELD CONSTRUCTION
 
 
-FIELD_TYPES = {
+FIELD_TYPES: dict[str, Type[Field]] = {
     "single-select": SingleSelectField,
     "multi-select": MultiSelectField,
     "player-lookup": PlayerField,
@@ -399,11 +658,24 @@ FIELD_TYPES = {
 }
 
 
-def construct_fields(data: dict[str, dict[str, Any]]):
+def construct_fields(data: dict[str, dict[str, Any]]) -> dict[str, Field]:
+    """Construct Field objects from JSON data.
+
+    Args:
+        data (dict[str, dict[str, Any]]): Raw data describing the arguments of a Field
+            object.
+
+    Returns:
+        dict[str, Field]: A dictionary of Field objects mapped to their name.
+    """
     return {
         field_name: FIELD_TYPES.get(field_data["field_type"], Field)(**field_data)
         for field_name, field_data in data.items()
     }
+
+
+#######################################################################################
+# MANAGING FIELD FILES
 
 
 _statcast_data: dict[str, dict[str, Any]] = json.load(
@@ -411,74 +683,30 @@ _statcast_data: dict[str, dict[str, Any]] = json.load(
 )
 
 
-STATCAST_FIELDS: dict[str, Database] = {
-    _db_name: Database(**_field_data)
-    for _db_name, _field_data in _statcast_data.items()
-}
-
-
 _fangraphs_data: dict[str, dict[str, Any]] = json.load(
     pkg_resources.resource_stream(__name__, "data/fangraphs_fields.json")
 )
 
 
-FANGRAPHS_FIELDS: dict[str, Database] = {
-    _db_name: Database(**_field_data)
-    for _db_name, _field_data in _fangraphs_data.items()
+#######################################################################################
+# CREATING FIELD OBJECTS
+
+
+STATCAST_FIELDS: dict[str, Collection] = {
+    _collection_name: Collection(
+        _field_data["name"],
+        _field_data["slug"],
+        construct_fields(_field_data["fields"]),
+    )
+    for _collection_name, _field_data in _statcast_data.items()
 }
 
 
-# STATCAST_DEFAULT_PARAMS: dict[str, dict[str, list[str]]]
-
-
-DEFAULT_SEARCH_PARAMS: dict[str, list[str]] = {}
-# DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
-
-
-for _field in STATCAST_FIELDS["search"].fields.values():
-    if _default_choice := _field.choices.get("default"):
-        DEFAULT_SEARCH_PARAMS |= _field.get_params(_default_choice)
-
-    # elif _field.field_type != "metric-range":
-    #     DEFAULT_SEARCH_PARAMS |= {_field.slug: [""]}
-
-
-# _search_field_data: dict[str, dict[str, Any]] = json.load(
-#     pkg_resources.resource_stream(__name__, "data/search_fields.json")
-# )
-
-# _leaderboard_field_data: dict[str, dict[str, Any]] = json.load(
-#     pkg_resources.resource_stream(__name__, "data/leaderboard_fields.json")
-# )
-
-
-# SEARCH_FIELDS: dict[str, Field] = construct_fields(_search_field_data)
-# LEADERBOARD_FIELDS: dict[str, Leaderboard] = {
-#     _leaderboard_name: Leaderboard(**_field_data)
-#     for _leaderboard_name, _field_data in _leaderboard_field_data.items()
-# }
-
-
-# DEFAULT_SEARCH_PARAMS: dict[str, list[str]] = {}
-# # DEFAULT_LEADERBOARD_PARAMS: dict[str, dict[str, list[str]]] = {}
-
-
-# for _field in SEARCH_FIELDS.values():
-#     if _default_choice := _field.choices.get("default"):
-#         DEFAULT_SEARCH_PARAMS |= _field.get_params(_default_choice)
-
-#     elif _field.field_type != "metric-range":
-#         DEFAULT_SEARCH_PARAMS |= {_field.name: [""]}
-
-
-# for _leaderboard in LEADERBOARD_FIELDS.values():
-#     _default_params: dict[str, list[str]] = {}
-
-#     for _field in _leaderboard.fields.values():
-#         if _default_choice := _field.choices.get("default"):
-#             _default_params |= _field.get_params(_default_choice)
-
-#         elif _field.field_type != "metric-range":
-#             _default_params |= {_field.slug: [""]}
-
-#     DEFAULT_LEADERBOARD_PARAMS[_leaderboard.name] = _default_params
+FANGRAPHS_FIELDS: dict[str, Collection] = {
+    _collection_name: Collection(
+        _field_data["name"],
+        _field_data["slug"],
+        construct_fields(_field_data["fields"]),
+    )
+    for _collection_name, _field_data in _fangraphs_data.items()
+}
