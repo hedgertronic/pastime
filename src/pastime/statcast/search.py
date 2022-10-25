@@ -27,11 +27,13 @@ def season(
     year: Param,
     *,
     add_spin_columns: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=False,
+        update_years=False,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         year=year,
         start_date=None,
         end_date=None,
@@ -43,13 +45,15 @@ def dates(
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
+    update_years: bool = True,
     add_spin_columns: bool = True,
-    update_seasons: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=update_seasons,
+        update_years=update_years,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         start_date=start_date,
         end_date=end_date,
         **kwargs,
@@ -60,11 +64,13 @@ def game(
     game_pk: str | int,
     *,
     add_spin_columns: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=False,
+        update_years=False,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         game_pk=game_pk,
         year="all years",
         start_date=None,
@@ -78,13 +84,15 @@ def pitcher(
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
+    update_years: bool = True,
     add_spin_columns: bool = True,
-    update_seasons: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=update_seasons,
+        update_years=update_years,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         pitchers=pitchers,
         start_date=start_date,
         end_date=end_date,
@@ -97,13 +105,15 @@ def batter(
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
+    update_years: bool = True,
     add_spin_columns: bool = True,
-    update_seasons: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=update_seasons,
+        update_years=update_years,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         batters=batters,
         start_date=start_date,
         end_date=end_date,
@@ -117,13 +127,15 @@ def matchup(
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
+    update_years: bool = True,
     add_spin_columns: bool = True,
-    update_seasons: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=update_seasons,
+        update_years=update_years,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         pitchers=pitchers,
         batters=batters,
         start_date=start_date,
@@ -137,13 +149,15 @@ def team(
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
+    update_years: bool = True,
     add_spin_columns: bool = True,
-    update_seasons: bool = True,
+    aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
-        update_seasons=update_seasons,
+        update_years=update_years,
         add_spin_columns=add_spin_columns,
+        aggregate=aggregate,
         team=team_name,
         start_date=start_date,
         end_date=end_date,
@@ -152,8 +166,9 @@ def team(
 
 
 def query(
-    update_seasons: bool = True,
+    update_years: bool = True,
     add_spin_columns: bool = True,
+    aggregate: bool = False,
     *,
     player_type: Param = "pitcher",
     min_pitches: Param = "0",
@@ -177,21 +192,25 @@ def query(
         player_event_sort=player_event_sort,
         sort_order="desc",
         min_pa=min_pa,
-        data_type="details",
+        data_type="aggregate" if aggregate else "details",
         get_all="true",
         season_type=season_type,
         year=year,
         **kwargs,
     )
 
-    if update_seasons:
-        search_query.update_seasons()
+    if update_years:
+        search_query.update_years()
 
-    data = (
-        pl.read_csv(search_query.request(), parse_dates=True, ignore_errors=True)
-        .drop_nulls(subset="game_date")
-        .drop(DEPRECATED_COLUMNS)
-        .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
-    )
+    data = pl.read_csv(search_query.request(), parse_dates=True, ignore_errors=True)
 
-    return spin_columns(data) if add_spin_columns else data
+    if not aggregate:
+        data = (
+            data.drop_nulls(subset="game_date")
+            .drop(DEPRECATED_COLUMNS)
+            .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
+        )
+
+        data = spin_columns(data) if add_spin_columns else data
+
+    return data
