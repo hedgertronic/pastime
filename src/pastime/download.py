@@ -114,16 +114,25 @@ def download_files(
     """
     output = io.StringIO()
 
+    if request_name:
+        CONSOLE.rule(f"[bold blue]{request_name}")
+
+    message_printed = False
+
     if len(params) > 1:
         CONSOLE.print(
             f"There are {len(params)} requests to make. This may take a while.",
         )
 
-    if request_name:
-        CONSOLE.rule(f"[bold blue]{request_name}")
+        message_printed = True
 
     if messages:
         for message in messages:
+            if message_printed:
+                CONSOLE.print()
+            else:
+                message_printed = True
+
             CONSOLE.print(message)
 
     ###################################################################################
