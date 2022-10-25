@@ -331,7 +331,7 @@ def query(
     year: Param = "2022",
     **kwargs: Param,
 ) -> pl.DataFrame:
-    """Make a Statcast query.
+    """Make a Statcast search query.
 
     Args:
         update_years (bool, optional): Whether to update the years included in the
@@ -349,8 +349,7 @@ def query(
         player_event_sort (Param, optional): Field to sort individual player events.
             Defaults to "exit velocity".
         min_pa (Param, optional): The minimum number of PAs. Defaults to "0".
-        season_type (Param, optional): The type of season. Defaults to "regular
-            season".
+        season_type (Param, optional): The type of season. Defaults to "regular season".
         year (Param, optional): The year. Defaults to "2022".
         kwargs (Param, optional): Additional params to include in the request.
 

@@ -2778,8 +2778,8 @@
             }
         }
     },
-    "outfield_jump": {
-        "name": "outfield_jump",
+    "of_jump": {
+        "name": "of_jump",
         "slug": "outfield_jump",
         "fields": {
             "season": {
