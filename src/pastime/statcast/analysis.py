@@ -59,6 +59,7 @@ ARSENAL_GROUP_BY_COLUMNS = [
     "pitch_type",
 ]
 
+
 ARSENAL_COLUMNS = [
     "pitcher",
     "player_name",
@@ -143,6 +144,11 @@ def spin_columns(data: pl.DataFrame) -> pl.DataFrame:
         return data
 
     spin = data[COMPUTATION_COLUMNS]
+
+    if len([s.name for s in spin if s.null_count() != spin.height]) != len(
+        spin.columns
+    ):
+        return data
 
     spin = _compute_release_angle(spin)
     spin = _compute_bauer_units(spin)
