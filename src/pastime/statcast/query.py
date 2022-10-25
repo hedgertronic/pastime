@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from typing import cast
 
 from pastime.exceptions import InvalidBoundError, InvalidSubgroupError
-from pastime.field import STATCAST_FIELDS, Collection, DateField, Field, MetricField
+from pastime.field import Collection, DateField, Field, MetricField
 from pastime.query import Query
 from pastime.type_aliases import Param
 
@@ -66,15 +66,14 @@ class SearchQuery(Query):
     def __init__(
         self,
         url: str,
-        collection_name: str = "search",
-        fields: dict[str, Collection] = STATCAST_FIELDS,
+        collection: Collection,
         **kwargs: Param,
     ):
         self.frequency = 1.0
         self.metric_counter = 1
         self.requests_to_make: list[dict[str, list[str]]] = []
 
-        super().__init__(url, collection_name, fields, **kwargs)
+        super().__init__(url, collection, **kwargs)
 
         self._update_dates()
 
@@ -148,7 +147,7 @@ class SearchQuery(Query):
         self._add_param(start_field, start)
         self._add_param(end_field, end)
 
-    def _prepare_requests(self):
+    def _prepare_requests(self) -> None:
         request_date_pairs = self._get_date_pairs()
 
         for start_date, end_date in request_date_pairs:
@@ -228,11 +227,10 @@ class LeaderboardQuery(Query):
     def __init__(
         self,
         url: str,
-        collection_name: str = "search",
-        fields: dict[str, Collection] = STATCAST_FIELDS,
+        collection: Collection,
         **kwargs: Param,
     ):
-        super().__init__(url, collection_name, fields, **kwargs)
+        super().__init__(url, collection, **kwargs)
 
         if self.collection.name == "swing_take":
             group = self.params["type"][0]

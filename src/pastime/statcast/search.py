@@ -168,8 +168,7 @@ def query(
 ) -> pl.DataFrame:
     search_query = SearchQuery(
         url=URL,
-        collection_name="search",
-        fields=STATCAST_FIELDS,
+        collection=STATCAST_FIELDS["search"],
         player_type=player_type,
         min_pitches=min_pitches,
         min_results=min_results,
