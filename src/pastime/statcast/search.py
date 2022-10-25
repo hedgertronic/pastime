@@ -1,15 +1,35 @@
+"""
+Make requests to the Statcast database.
+
+This module provides a set of functions that allow for querying and downloading data
+from the Baseball Savant Statcast Search database.
+
+The web version of the database can be found at
+https://baseballsavant.mlb.com/statcast_search.
+
+An explanation of the all the fields and values returned from the databse can be found
+at https://baseballsavant.mlb.com/csv-docs.
+"""
+
 from datetime import date
 
 import polars as pl
 
-from pastime.field import STATCAST_COLLECTIONS, Param
+from pastime.field import STATCAST_COLLECTIONS
 from pastime.statcast.analysis import spin_columns
 from pastime.statcast.query import SearchQuery
+from pastime.type_aliases import Param
 
 
+#######################################################################################
+# USEFUL CONSTANTS
+
+
+# The base URL for Baseball Savant
 URL = "https://baseballsavant.mlb.com"
 
 
+# Columns that are deprecated and should not be included in requests.
 DEPRECATED_COLUMNS = [
     "spin_dir",
     "spin_rate_deprecated",
@@ -23,6 +43,10 @@ DEPRECATED_COLUMNS = [
 ]
 
 
+#######################################################################################
+# STATCAST SEARCH FUNCTIONS
+
+
 def season(
     year: Param,
     *,
@@ -30,6 +54,21 @@ def season(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast data for a full season.
+
+    This will require many separate requests and will take a while.
+
+    Args:
+        year (Param): The year to get data for.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     return query(
         update_years=False,
         add_spin_columns=add_spin_columns,
@@ -50,12 +89,34 @@ def dates(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast for a certain range of dates.
+
+    Args:
+        start_date (str | date | None, optional): The earliest date to get in the
+            request. Defaults to today's date or end date if provided.
+        end_date (str | date | None, optional): The latest date to get in the request.
+            Defaults to today's date or start date if provided.
+        update_years (bool, optional): Whether to update the years included in the
+            request to reflect the dates provided in the request. Defaults to True.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
+    if not start_date and end_date:
+        end_date = date.today()
+        start_date = date.today()
+
     return query(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
         aggregate=aggregate,
-        start_date=start_date,
-        end_date=end_date,
+        start_date=start_date or end_date,
+        end_date=end_date or start_date,
         **kwargs,
     )
 
@@ -67,6 +128,19 @@ def game(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast data for an individual game.
+
+    Args:
+        game_pk (str | int): The primary key of the game to retrieve.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     return query(
         update_years=False,
         add_spin_columns=add_spin_columns,
@@ -89,6 +163,25 @@ def pitcher(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast data for a pitcher or list of pitchers.
+
+    Args:
+        pitchers (Param): The pitcher ID or IDs to retrieve data for.
+        start_date (str | date | None, optional): The earliest date to get in the
+            request. Defaults to the start date of the earliest season in the request.
+        end_date (str | date | None, optional): The latest date to get in the request.
+            Defaults to the end date of the latest season in the request.
+        update_years (bool, optional): Whether to update the years included in the
+            request to reflect the dates provided in the request. Defaults to True.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     return query(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
@@ -110,6 +203,25 @@ def batter(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast data for a batter or list of batters.
+
+    Args:
+        batter (Param): The batter ID or IDs to retrieve data for.
+        start_date (str | date | None, optional): The earliest date to get in the
+            request. Defaults to the start date of the earliest season in the request.
+        end_date (str | date | None, optional): The latest date to get in the request.
+            Defaults to the end date of the latest season in the request.
+        update_years (bool, optional): Whether to update the years included in the
+            request to reflect the dates provided in the request. Defaults to True.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     return query(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
@@ -132,6 +244,26 @@ def matchup(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast data for batter/pitcher matchups.
+
+    Args:
+        pitchers (Param): The pitcher ID or IDs to retrieve data for.
+        batters (Param): The batter ID or IDs to retrieve data for.
+        start_date (str | date | None, optional): The earliest date to get in the
+            request. Defaults to the start date of the earliest season in the request.
+        end_date (str | date | None, optional): The latest date to get in the request.
+            Defaults to the end date of the latest season in the request.
+        update_years (bool, optional): Whether to update the years included in the
+            request to reflect the dates provided in the request. Defaults to True.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     return query(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
@@ -154,6 +286,25 @@ def team(
     aggregate: bool = False,
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Get Statcast data for a team.
+
+    Args:
+        team_name (str): The team to get data for.
+        start_date (str | date | None, optional): The earliest date to get in the
+            request. Defaults to the start date of the earliest season in the request.
+        end_date (str | date | None, optional): The latest date to get in the request.
+            Defaults to the end date of the latest season in the request.
+        update_years (bool, optional): Whether to update the years included in the
+            request to reflect the dates provided in the request. Defaults to True.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     return query(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
@@ -181,6 +332,32 @@ def query(
     year: Param = "2022",
     **kwargs: Param,
 ) -> pl.DataFrame:
+    """Make a Statcast query.
+
+    Args:
+        update_years (bool, optional): Whether to update the years included in the
+            request to reflect the dates provided in the request. Defaults to True.
+        add_spin_columns (bool, optional): Whether to add spin columns to the data.
+            Defaults to True.
+        aggregate (bool, optional): Whether to aggregate the data or keep invididual
+            pitch-by-pitch. Defaults to False.
+        player_type (Param, optional): The player type to set the `player_type` field
+            in the returned data. Defaults to "pitcher".
+        min_pitches (Param, optional): The minimum number of pitches. Defaults to "0".
+        min_results (Param, optional): The minimum number of results. Defaults to "0".
+        group_by (Param, optional): Field to group by. Defaults to "player name".
+        sort_by (Param, optional): Field to sort by. Defaults to "pitches".
+        player_event_sort (Param, optional): Field to sort individual player events.
+            Defaults to "exit velocity".
+        min_pa (Param, optional): The minimum number of PAs. Defaults to "0".
+        season_type (Param, optional): The type of season. Defaults to "regular
+            season".
+        year (Param, optional): The year. Defaults to "2022".
+        kwargs (Param, optional): Additional params to include in the request.
+
+    Returns:
+        pl.DataFrame: The returned, cleaned, and sorted data.
+    """
     search_query = SearchQuery(
         url=URL,
         collection=STATCAST_COLLECTIONS["search"],

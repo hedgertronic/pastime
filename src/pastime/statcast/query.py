@@ -41,7 +41,7 @@ DAYS_PER_REQUEST = int(MAX_ROWS_PER_REQUEST / (PITCHES_PER_GAME * GAMES_PER_DAY)
 
 
 #######################################################################################
-# OTHER USEFUL INFO
+# OTHER USEFUL CONSTANTS
 
 
 # The start date of every regular season and end date of every postseason
@@ -285,7 +285,8 @@ class SearchQuery(Query):
         if start and start < date(2015, 1, 1):
             messages.append(
                 "Some metrics such as 'exit velocity' and 'batted ball events'"
-                " are not available before 2015."
+                " are not available before 2015. The ability to add spin columns"
+                " for data before 2015 is not possible."
             )
 
         if end and end >= date.today():
