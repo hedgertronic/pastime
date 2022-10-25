@@ -416,7 +416,8 @@
                     "details": "details"
                 },
                 "frequencies": {
-                    "default": 0.005
+                    "default": 0.005,
+                    "details": 1.0
                 },
                 "field_type": "single-select"
             },
