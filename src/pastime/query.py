@@ -4,8 +4,7 @@ import io
 
 from pastime.download import download_files
 from pastime.exceptions import FieldNameError
-from pastime.field import Collection, Field
-from pastime.type_aliases import Param
+from pastime.field import Collection, Field, Param
 
 
 class Query:

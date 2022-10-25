@@ -22,7 +22,14 @@ from pastime.exceptions import (
     TooManyValuesError,
 )
 from pastime.lookup import lookup_id
-from pastime.type_aliases import Param, ParamComponent
+
+
+#######################################################################################
+# TYPE ALIASES
+
+
+ParamComponent = str | int | float | date | None
+Param = ParamComponent | Sequence[ParamComponent]
 
 
 #######################################################################################

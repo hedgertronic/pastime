@@ -4,9 +4,8 @@ from datetime import date, timedelta
 from typing import cast
 
 from pastime.exceptions import InvalidBoundError, InvalidSubgroupError
-from pastime.field import Collection, DateField, Field, MetricField
+from pastime.field import Collection, DateField, Field, MetricField, Param
 from pastime.query import Query
-from pastime.type_aliases import Param
 
 
 #######################################################################################
