@@ -1,4 +1,5 @@
-import io
+"""Organize and make a query to a collection of fields."""
+
 from datetime import date, timedelta
 from typing import cast
 
@@ -12,22 +13,38 @@ from pastime.type_aliases import Param
 # CONSTANTS FOR REQUEST SPLITTING
 
 
-MAX_ROWS_PER_REQUEST = 15_000
+# The number of games on a usual day
+GAMES_PER_DAY = 15
 
-
+# The number of games in a regular season
 GAMES_PER_REGULAR_SEASON = 2_430
+
+# The maximum number of games in the modern postseason
 GAMES_PER_POSTSEASON = 53
+
+# The maximum number of games in a year, including the regular season and postseason
 GAMES_PER_YEAR = GAMES_PER_REGULAR_SEASON + GAMES_PER_POSTSEASON
 
-
+# The average number of pitches in a game (both teams combined)
 PITCHES_PER_GAME = 325
+
+# The estimated number of pitches in a season
 PITCHES_PER_YEAR = GAMES_PER_YEAR * PITCHES_PER_GAME
+
+# The maximum number of rows in a request; despite a request returning up to 40,000
+# rows, performance gets significantly slower the higher this number is
+MAX_ROWS_PER_REQUEST = 15_000
+
+# The estimated number of days to include in a request so that a request does not
+# exceed the maximum number of rows in a request
+DAYS_PER_REQUEST = int(MAX_ROWS_PER_REQUEST / (PITCHES_PER_GAME * GAMES_PER_DAY))
 
 
 #######################################################################################
 # OTHER USEFUL INFO
 
 
+# The start date of every regular season and end date of every postseason
 SEASON_DATES = {
     2008: {"start": date(2008, 3, 25), "end": date(2008, 10, 27)},
     2009: {"start": date(2009, 4, 5), "end": date(2009, 11, 4)},
@@ -47,6 +64,7 @@ SEASON_DATES = {
 }
 
 
+# Subgroups which are allowed for each group of the Swing-Take leaderboard
 _SWING_TAKE_GROUPS = {
     "Swing-Take": ["swing", "take"],
     "Pitch Type": ["fastball", "curve", "cutter", "changeup", "slider", "other"],
@@ -60,6 +78,24 @@ _SWING_TAKE_GROUPS = {
 
 
 class SearchQuery(Query):
+    """Query a Statcast Search collection with given parameters.
+
+    Attributes:
+        url (str): The URL of the query.
+        collection (Collection): The collection to query.
+        params (dict[str, list[str]]): The params to URL-encoded and included in the
+            request.
+        requests_to_make (list[dict[str, list[str]]]): A list of param dicts that can
+            be broken up by date if necessary. For collections that limit the number of
+            items returned in a single request, multiple requests can be made to access
+            all of the desired data. Statcast requests are limited to 40,000 rows.
+        frequency (float): The estimated frequency factor of the request. This can be
+            used to break up requests if necessary.
+        metric_counter (int): The number of metrics included in the request. This is
+            used since metrics included in a Statcast request must have an incrementing
+            counter included in their slug.
+    """
+
     ####################################################################################
     # PUBLIC METHODS
 
@@ -69,15 +105,37 @@ class SearchQuery(Query):
         collection: Collection,
         **kwargs: Param,
     ):
+        """Initialize a query with a collection of parameters.
+
+        Args:
+            url (str): The URL of the query.
+            collection (Collection): The collection to query.
+            kwargs (Param): The params to include in the query.
+
+        Raises:
+            FieldNameError: If the given field name does not exist for the collection.
+        """
         self.frequency = 1.0
         self.metric_counter = 1
-        self.requests_to_make: list[dict[str, list[str]]] = []
 
         super().__init__(url, collection, **kwargs)
 
         self._update_dates()
 
-    def update_seasons(self) -> None:
+    def update_years(self) -> None:
+        """Update the years in a request to match the given dates.
+
+        Since the default year in a request is the current year and the current year
+        only, a request that is made with specified dates that are outside the current
+        year will not include some of the expected data if the year value is not
+        updated as well. Calling this method will automatically update the year param
+        to contain all years between the given dates.
+
+        For example, if a request is made for the dates `2019-05-01` through
+        `2020-06-01` but the year parameter is left untouched, an empty DataFrame will
+        be returned. This method will automatically update the year parameter to
+        include 2019 and 2020.
+        """
         season_field = self.collection.fields["year"]
 
         seasons = cast(list[str], season_field.get_values(self.params))
@@ -99,13 +157,11 @@ class SearchQuery(Query):
             ),
         )
 
-    def request(self, **kwargs) -> io.StringIO:
-        return super().request(messages=self._get_messages(), **kwargs)
-
     ####################################################################################
     # HELPER METHODS
 
     def _add_param(self, field: Field, values: Param) -> None:
+        """Add a param to the query and update the frequency of the request."""
         if not values:
             return
 
@@ -113,6 +169,9 @@ class SearchQuery(Query):
 
         if isinstance(field, DateField):
             pass
+
+        # Metrics included in a Statcast Search request contain an incrementing counter
+        # in their URL slug for each additional request included.
 
         elif isinstance(field, MetricField):
             new_params[f"metric_{self.metric_counter}"] = new_params.pop("metric")
@@ -125,21 +184,24 @@ class SearchQuery(Query):
         self.frequency *= field.get_frequency(self.params)
 
     def _update_dates(self) -> None:
-        start_field = self.collection.fields["start_date"]
-        end_field = self.collection.fields["end_date"]
+        """Update the dates included in the request.
+
+        If no start or end date is included, the start or end date of the request will
+        be updated to be the start or end date of the first or last season in the
+        request.
+        """
+        start_field = cast(DateField, self.collection.fields["start_date"])
+        end_field = cast(DateField, self.collection.fields["end_date"])
 
         seasons = cast(
             list[str], self.collection.fields["year"].get_values(self.params)
         )
 
         start = (
-            cast(date | None, start_field.get_values(self.params))
+            start_field.get_values(self.params)
             or SEASON_DATES[int(seasons[0])]["start"]
         )
-        end = (
-            cast(date | None, end_field.get_values(self.params))
-            or SEASON_DATES[int(seasons[-1])]["end"]
-        )
+        end = end_field.get_values(self.params) or SEASON_DATES[int(seasons[-1])]["end"]
 
         if start > end:
             raise InvalidBoundError(min_value=str(start), max_value=str(end))
@@ -148,6 +210,12 @@ class SearchQuery(Query):
         self._add_param(end_field, end)
 
     def _prepare_requests(self) -> None:
+        """Prepare the list of requests to make.
+
+        The requests will be separated by start and end date if the frequency of the
+        request is high enough to expect that there will be more than the maximum
+        returned.
+        """
         request_date_pairs = self._get_date_pairs()
 
         for start_date, end_date in request_date_pairs:
@@ -159,6 +227,7 @@ class SearchQuery(Query):
             self.requests_to_make.append(params_copy)
 
     def _get_date_pairs(self) -> list[tuple[str, str]]:
+        """Separate the dates of the query based on expected rows returned."""
         date_pairs: list[tuple[str, str]] = []
 
         start = cast(date, self.collection.fields["start_date"].get_values(self.params))
@@ -169,6 +238,8 @@ class SearchQuery(Query):
         if est_rows < MAX_ROWS_PER_REQUEST:
             return [(str(start), str(end))]
 
+        # Each request is limited to one season.
+
         for season in range(start.year, end.year + 1):
             season_start = SEASON_DATES[season]["start"]
             season_end = SEASON_DATES[season]["end"]
@@ -177,7 +248,9 @@ class SearchQuery(Query):
 
             while range_start <= min(season_end, end):
                 range_end = min(
-                    end, range_start + timedelta(days=int(2 / self.frequency))
+                    end,
+                    range_start
+                    + timedelta(days=int((DAYS_PER_REQUEST - 1) / self.frequency)),
                 )
 
                 date_pairs.append(
@@ -194,6 +267,7 @@ class SearchQuery(Query):
         return date_pairs
 
     def _get_messages(self) -> list[str]:
+        """Get any important messages for the given request."""
         messages = []
 
         start = cast(
@@ -224,12 +298,43 @@ class SearchQuery(Query):
 
 
 class LeaderboardQuery(Query):
+    """Query a Statcast Leaderboard collection with given parameters.
+
+    Attributes:
+        url (str): The URL of the query.
+        collection (Collection): The collection to query.
+        params (dict[str, list[str]]): The params to URL-encoded and included in the
+            request.
+        requests_to_make (list[dict[str, list[str]]]): A list of param dicts that can
+            be broken up by date if necessary. For collections that limit the number of
+            items returned in a single request, multiple requests can be made to access
+            all of the desired data. Statcast requests are limited to 40,000 rows.
+        frequency (float): The estimated frequency factor of the request. This can be
+            used to break up requests if necessary.
+        metric_counter (int): The number of metrics included in the request. This is
+            used since metrics included in a Statcast request must have an incrementing
+            counter included in their slug.
+    """
+
     def __init__(
         self,
         url: str,
         collection: Collection,
         **kwargs: Param,
     ):
+        """Initialize a query with a collection of parameters.
+
+        If the collection is the Swing-Take leaderboard, an additional check must be
+        made to ensure the chosen subgroup is compatible with the chosen group.
+
+        Args:
+            url (str): The URL of the query.
+            collection (Collection): The collection to query.
+            kwargs (Param): The params to include in the query.
+
+        Raises:
+            FieldNameError: If the given field name does not exist for the collection.
+        """
         super().__init__(url, collection, **kwargs)
 
         if self.collection.name == "swing_take":

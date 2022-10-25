@@ -1,4 +1,4 @@
-"""Query a collection with given parameters."""
+"""Organize and make a query to a collection of fields."""
 
 import io
 
@@ -9,7 +9,18 @@ from pastime.type_aliases import Param
 
 
 class Query:
-    """Query a collection with given parameters."""
+    """Query a collection with given parameters.
+
+    Attributes:
+        url (str): The URL of the query.
+        collection (Collection): The collection to query.
+        params (dict[str, list[str]]): The params to URL-encoded and included in the
+            request.
+        requests_to_make (list[dict[str, list[str]]]): A list of param dicts that can
+            be broken up by date if necessary. For collections that limit the number of
+            items returned in a single request, multiple requests can be made to access
+            all of the desired data.
+    """
 
     ####################################################################################
     # PUBLIC METHODS
@@ -57,6 +68,7 @@ class Query:
         return download_files(
             url=f"{self.url}/{self.collection.slug}",
             params=self.requests_to_make,
+            messages=self._get_messages(),
             **kwargs,
         )
 
@@ -70,3 +82,7 @@ class Query:
     def _prepare_requests(self) -> None:
         """Prepare the list of requests to make."""
         self.requests_to_make.append(self.params)
+
+    def _get_messages(self) -> list[str]:
+        """Get any important messages for the given request."""
+        return []

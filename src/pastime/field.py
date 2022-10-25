@@ -1,14 +1,6 @@
 """Store data for fields used for making query requests.
 
 This module provides classes that simplify interacting with field data.
-
-Attributes:
-    FIELD_TYPES (dict[str, Field]): A mapping of field names to the actual field
-        classes for easier construction.
-    STATCAST_FIELDS (dict[str, Collection]): A mapping of collection names to their
-        respective Statcast field collections.
-    FANGRAPHS_FIELDS (dict[str, Collection]): A mapping of collection names to their
-        respective Fangraphs field collections.
 """
 
 from __future__ import annotations
@@ -70,7 +62,7 @@ class Field:
         return {self.slug: [str(self._validate_values(values))]}
 
     def get_values(self, params: dict[str, list[str]]) -> Param:
-        """Get values from a dict of query strings.
+        """Get values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
@@ -82,14 +74,14 @@ class Field:
         return params[self.slug][0]
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        """Get frequency of values from a dict of query strings.
+        """Get frequency of values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
 
         Returns:
             float: Total frequency of values that are mapped to the field's slug from
-                the dict of query strings.
+                the dict of params.
         """
         return self.frequencies.get("default", 1.0) if params.get(self.slug) else 1.0
 
@@ -117,7 +109,13 @@ class SingleSelectField(Field):
     def get_params(self, values: Param) -> dict[str, list[str]]:
         """Create dict of params that can be urlencoded in a Requests request.
 
-        A SingleSelectField only accepts one value.
+        A SingleSelectField only accepts one value. This value can be either the name
+        or the URL slug of a given choice. Some URL slugs are confusing and unclear
+        (e.g. the URL slugs for venues in the Statcast Search collection are integers
+        with no obvious connection to the venue they are supposed to represent). On the
+        other hand, some URL slugs can be easier and quicker to use (the URL slugs for
+        pitch types are only two characters long -- "FF" is easier to type than "4-seam
+        fastball").
 
         Args:
             values (Param): A value to put into a query string.
@@ -138,8 +136,14 @@ class SingleSelectField(Field):
         if not value:
             pass
 
+        # Each key of the choices instance variable represents an easy to understand
+        # name of the respective choice.
+
         elif value.lower() in self.choices:
             param = self.choices[value.lower()]
+
+        # Each value of the choices instance variables represents the slug of the
+        # respective choice.
 
         elif value in self.choices.values():
             param = value
@@ -152,7 +156,7 @@ class SingleSelectField(Field):
         return param
 
     def get_values(self, params: dict[str, list[str]]) -> str:
-        """Get value from a dict of query strings.
+        """Get value from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
@@ -164,14 +168,14 @@ class SingleSelectField(Field):
         return params[self.slug][0].replace(r"\.", ".")
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        """Get frequency of values from a dict of query strings.
+        """Get frequency of values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
 
         Returns:
             float: Total frequency of values that are mapped to the field's slug from
-                the dict of query strings.
+                the dict of params.
         """
         return self.frequencies.get(
             self.get_values(params), self.frequencies.get("default", 1.0)
@@ -179,17 +183,20 @@ class SingleSelectField(Field):
 
     def _validate_values(self, values: Param) -> str:
         """Confirm the type and structure of a given value."""
-        if (
+        if not values:
+            values = ""
+
+        elif (
             not isinstance(values, str)
             and isinstance(values, Sequence)
             and len(values) > 1
         ):
             raise TooManyValuesError(values=values, field_name=self.name, max_values=1)
 
-        if not isinstance(values, str) and isinstance(values, Sequence):
+        elif not isinstance(values, str) and isinstance(values, Sequence):
             values = values[0]
 
-        return str(values) if values else ""
+        return str(values)
 
 
 @dataclass
@@ -223,7 +230,13 @@ class MultiSelectField(Field):
     def get_params(self, values: Param) -> dict[str, list[str]]:
         """Create dict of params that can be urlencoded in a Requests request.
 
-        A MultiSelectField accepts multiple values.
+        A MultiSelectField accepts multiple values. These values can be either the name
+        or the URL slug of a given choice. Some URL slugs are confusing and unclear
+        (e.g. the URL slugs for venues in the Statcast Search collection are integers
+        with no obvious connection to the venue they are supposed to represent). On the
+        other hand, some URL slugs can be easier and quicker to use (the URL slugs for
+        pitch types are only two characters long -- "FF" is easier to type than "4-seam
+        fastball").
 
         Args:
             values (Param): A list of values to put into a query string.
@@ -255,11 +268,17 @@ class MultiSelectField(Field):
         if not value:
             pass
 
+        # Each key of the choices instance variable represents an easy to understand
+        # name of the respective choice.
+
         elif value.lower() in self.choices:
             params.add(self.choices[value])
 
         elif value.lower() in self.aliases:
             params |= set(self.aliases[value])
+
+        # Each value of the choices instance variables represents the slug of the
+        # respective choice.
 
         elif value in self.choices.values():
             params.add(value)
@@ -272,7 +291,7 @@ class MultiSelectField(Field):
         return params
 
     def get_values(self, params: dict[str, list[str]]) -> list[str]:
-        """Get values from a dict of query strings.
+        """Get values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
@@ -281,17 +300,19 @@ class MultiSelectField(Field):
             Param: Values that are mapped to the field's slug parsed from the dict of
                 query strings.
         """
-        return params[self.slug][0].replace(r"\.", ".").split("|")[:-1]
+        values = params[self.slug][0].replace(r"\.", ".").split(self.delimiter)
+
+        return values[:-1] if self.add_trailing_delimiter else values
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        """Get frequency of values from a dict of query strings.
+        """Get frequency of values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
 
         Returns:
             float: Total frequency of values that are mapped to the field's slug from
-                the dict of query strings.
+                the dict of params.
         """
         default_frequency = self.frequencies.get("default", 1.0)
 
@@ -347,7 +368,7 @@ class PlayerField(Field):
         return {self.slug: [str(value) for value in sorted(values) if value]}
 
     def get_values(self, params: dict[str, list[str]]) -> list[str]:
-        """Get values from a dict of query strings.
+        """Get values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
@@ -359,14 +380,14 @@ class PlayerField(Field):
         return params[self.slug]
 
     def get_frequency(self, params: dict[str, list[str]]) -> float:
-        """Get frequency of values from a dict of query strings.
+        """Get frequency of values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
 
         Returns:
             float: Total frequency of values that are mapped to the field's slug from
-                the dict of query strings.
+                the dict of params.
         """
         total = 0.01 * len(self.get_values(params))
 
@@ -432,7 +453,7 @@ class DateField(Field):
         return {self.slug: [value.strftime(self.date_format) if value else ""]}
 
     def get_values(self, params: dict[str, list[str]]) -> date | None:
-        """Get values from a dict of query strings.
+        """Get values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
@@ -551,7 +572,7 @@ class MetricField(Field):
         }
 
     def get_values(self, params: dict[str, list[str]]) -> tuple[str, str]:
-        """Get values from a dict of query strings.
+        """Get values from a dict of params.
 
         Args:
             params (dict[str, list[str]]): A dict of URL slugs to query strings.
@@ -650,6 +671,7 @@ class Collection(NamedTuple):
 # FIELD CONSTRUCTION
 
 
+# A mapping of field names to the actual field classes for easier construction
 FIELD_TYPES: dict[str, Type[Field]] = {
     "single-select": SingleSelectField,
     "multi-select": MultiSelectField,
@@ -693,6 +715,7 @@ _fangraphs_data: dict[str, dict[str, Any]] = json.load(
 # CREATING FIELD OBJECTS
 
 
+# A mapping of collection names to their respective Statcast field collections
 STATCAST_FIELDS: dict[str, Collection] = {
     _collection_name: Collection(
         _field_data["name"],
@@ -703,6 +726,7 @@ STATCAST_FIELDS: dict[str, Collection] = {
 }
 
 
+# A mapping of collection names to their respective Fangraphs field collections
 FANGRAPHS_FIELDS: dict[str, Collection] = {
     _collection_name: Collection(
         _field_data["name"],
