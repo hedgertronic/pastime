@@ -1,3 +1,5 @@
+"""Download files with concurrency and progress bars."""
+
 import io
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -22,13 +24,16 @@ from rich.progress import (
 # PROGRESS BAR AND CONSOLE
 
 
-console = Console()
+# Rich console for printing
+CONSOLE = Console()
 
 
+# Generic task description template to be filled in by progress bar
 _TASK_DESCRIPTION = "[bold #AAAAAA]({done} out of {total} files downloaded)"
 
 
-def _current_app_progress() -> Progress:
+def _current_request_progress() -> Progress:
+    """Return progress bar that represents the current request."""
     return Progress(
         TextColumn("{task.description}"),
         "[progress.percentage]{task.percentage:>3.1f}%",
@@ -43,10 +48,12 @@ def _current_app_progress() -> Progress:
 
 
 def _overall_progress() -> Progress:
+    """Return progress bar that represents overall progress of all requests."""
     return Progress(TimeElapsedColumn(), BarColumn(), TextColumn("{task.description}"))
 
 
 def _progress_group(current_app_progress, overall_progress) -> Group:
+    """Return group of current progress bars with overall progress bar."""
     return Group(
         Panel(Group(current_app_progress)),
         overall_progress,
@@ -64,6 +71,18 @@ def download_file(
     messages: Sequence[str] = None,
     **kwargs: Any,
 ) -> io.StringIO:
+    """Download a single file.
+
+    Args:
+        url (str): The URL to request from.
+        params (dict[str, list[str]]): A dict of params to include with the request.
+        request_name (str | None, optional): The name of the request. Defaults to None.
+        messages (Sequence[str], optional): Messages to display before the request.
+            Defaults to None.
+
+    Returns:
+        io.StringIO: A String IO object that contains the data from the requests.
+    """
     return download_files(
         url,
         [params],
@@ -80,24 +99,37 @@ def download_files(
     messages: Sequence[str] = None,
     **kwargs: Any,
 ) -> io.StringIO:
+    """Download multiple files from a URL with multiple combinations of parameters.
+
+    Args:
+        url (str): The URL to request from.
+        params (Sequence[dict[str, list[str]]]): A sequence of param dicts with each
+            one representing a different request to make.
+        request_name (str | None, optional): The name of the request. Defaults to None.
+        messages (Sequence[str], optional): Messages to display before the request.
+            Defaults to None.
+
+    Returns:
+        io.StringIO: A String IO object that contains the data from all requests.
+    """
     output = io.StringIO()
 
     if len(params) > 1:
-        console.print(
+        CONSOLE.print(
             f"There are {len(params)} requests to make. This may take a while.",
         )
 
     if request_name:
-        console.rule(f"[bold blue]{request_name}")
+        CONSOLE.rule(f"[bold blue]{request_name}")
 
     if messages:
         for message in messages:
-            console.print(message)
+            CONSOLE.print(message)
 
     ###################################################################################
     # PROGRESS BAR SETUP -- DIFFERENT INSTANCE EVERY TIME
 
-    current_app_progress = _current_app_progress()
+    current_app_progress = _current_request_progress()
     overall_progress = _overall_progress()
 
     tasks_complete = 0
@@ -110,11 +142,24 @@ def download_files(
     ###################################################################################
     # INNER FUNCTION -- NEEDS ACCESS TO PROGRESS BAR VARIABLES
 
+    # Making the function that is sent to the thread pool an inner function was the
+    # simplest way to give it access to all progress bar and task variables. There
+    # probably exists a nicer way of implementing this somewhere down the line.
+
     def make_request(
         url: str,
         output: IO,
         **kwargs,
-    ):
+    ) -> IO:
+        """Make a request to a given URL and return the output.
+
+        Args:
+            url (str): The URL to request from.
+            output (IO): The IO object to write to.
+
+        Returns:
+            IO: The IO object that was written to.
+        """
         task_id = current_app_progress.add_task(
             description="Making request...",
             total=None,
@@ -137,6 +182,10 @@ def download_files(
 
         current_app_progress.stop_task(task_id)
         current_app_progress.update(task_id, description="[bold green]File downloaded!")
+
+        # This is necessary to access the variable from the outer scope. This may not
+        # be the cleanest way of handling this, but passing the variable into the
+        # function did not work because of the concurrency.
 
         nonlocal tasks_complete
         tasks_complete += 1
@@ -171,8 +220,9 @@ def download_files(
                 **kwargs,
             )
 
-            time.sleep(1)
+            # Wait a second between requests so we don't piss off whoever is nice
+            # enough to host the data we are accessing :)
 
-    console.print("\n")
+            time.sleep(1)
 
     return output
