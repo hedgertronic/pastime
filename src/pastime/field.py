@@ -5,13 +5,11 @@ This module provides classes that simplify interacting with field data.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, NamedTuple, Sequence, Type
 
 import numpy as np
-import pkg_resources
 
 from pastime.exceptions import (
     FieldTypeError,
@@ -702,43 +700,3 @@ def construct_fields(data: dict[str, dict[str, Any]]) -> dict[str, Field]:
         field_name: FIELD_TYPES.get(field_data["field_type"], Field)(**field_data)
         for field_name, field_data in data.items()
     }
-
-
-#######################################################################################
-# MANAGING FIELD FILES
-
-
-_statcast_data: dict[str, dict[str, Any]] = json.load(
-    pkg_resources.resource_stream(__name__, "data/statcast_fields.json")
-)
-
-
-_fangraphs_data: dict[str, dict[str, Any]] = json.load(
-    pkg_resources.resource_stream(__name__, "data/fangraphs_fields.json")
-)
-
-
-#######################################################################################
-# CREATING FIELD OBJECTS
-
-
-# A mapping of collection names to their respective Statcast field collections
-STATCAST_COLLECTIONS: dict[str, Collection] = {
-    _collection_name: Collection(
-        _field_data["name"],
-        _field_data["slug"],
-        construct_fields(_field_data["fields"]),
-    )
-    for _collection_name, _field_data in _statcast_data.items()
-}
-
-
-# A mapping of collection names to their respective Fangraphs field collections
-FANGRAPHS_COLLECTIONS: dict[str, Collection] = {
-    _collection_name: Collection(
-        _field_data["name"],
-        _field_data["slug"],
-        construct_fields(_field_data["fields"]),
-    )
-    for _collection_name, _field_data in _fangraphs_data.items()
-}

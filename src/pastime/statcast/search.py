@@ -15,8 +15,9 @@ from datetime import date
 
 import polars as pl
 
-from pastime.field import STATCAST_COLLECTIONS, Param
+from pastime.field import Param
 from pastime.statcast.analysis import spin_columns
+from pastime.statcast.base import STATCAST_COLLECTIONS
 from pastime.statcast.query import SearchQuery
 
 

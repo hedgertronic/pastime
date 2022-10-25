@@ -10,7 +10,7 @@ https://baseballsavant.mlb.com/leaderboard/statcast.
 
 import polars as pl
 
-from pastime.field import STATCAST_COLLECTIONS
+from pastime.statcast.base import STATCAST_COLLECTIONS
 from pastime.statcast.query import LeaderboardQuery
 
 
