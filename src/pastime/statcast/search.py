@@ -7,7 +7,7 @@ from pastime.statcast.analysis import spin_columns
 from pastime.statcast.query import SearchQuery
 
 
-URL = "https://baseballsavant.mlb.com/statcast_search/csv?"
+URL = "https://baseballsavant.mlb.com"
 
 
 DEPRECATED_COLUMNS = [
@@ -27,13 +27,11 @@ def season(
     year: Param,
     *,
     add_spin_columns: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=False,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         year=year,
         start_date=None,
         end_date=None,
@@ -47,13 +45,11 @@ def dates(
     *,
     add_spin_columns: bool = True,
     update_seasons: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=update_seasons,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         start_date=start_date,
         end_date=end_date,
         **kwargs,
@@ -64,13 +60,11 @@ def game(
     game_pk: str | int,
     *,
     add_spin_columns: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=False,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         game_pk=game_pk,
         year="all years",
         start_date=None,
@@ -86,13 +80,11 @@ def pitcher(
     *,
     add_spin_columns: bool = True,
     update_seasons: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=update_seasons,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         pitchers=pitchers,
         start_date=start_date,
         end_date=end_date,
@@ -107,13 +99,11 @@ def batter(
     *,
     add_spin_columns: bool = True,
     update_seasons: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=update_seasons,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         batters=batters,
         start_date=start_date,
         end_date=end_date,
@@ -129,13 +119,11 @@ def matchup(
     *,
     add_spin_columns: bool = True,
     update_seasons: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=update_seasons,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         pitchers=pitchers,
         batters=batters,
         start_date=start_date,
@@ -151,13 +139,11 @@ def team(
     *,
     add_spin_columns: bool = True,
     update_seasons: bool = True,
-    sort_descending: bool = True,
     **kwargs: Param,
 ) -> pl.DataFrame:
     return query(
         update_seasons=update_seasons,
         add_spin_columns=add_spin_columns,
-        sort_descending=sort_descending,
         team=team_name,
         start_date=start_date,
         end_date=end_date,
@@ -168,7 +154,6 @@ def team(
 def query(
     update_seasons: bool = True,
     add_spin_columns: bool = True,
-    sort_descending: bool = True,
     *,
     player_type: Param = "pitcher",
     min_pitches: Param = "0",
@@ -191,7 +176,7 @@ def query(
         group_by=group_by,
         sort_by=sort_by,
         player_event_sort=player_event_sort,
-        sort_order="desc" if sort_descending else "asc",
+        sort_order="desc",
         min_pa=min_pa,
         data_type="details",
         get_all="true",

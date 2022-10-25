@@ -1,7 +1,7 @@
 {
     "search": {
         "name": "search",
-        "slug": "",
+        "slug": "statcast_search/csv",
         "fields": {
             "venue": {
                 "name": "venue",
