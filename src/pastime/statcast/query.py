@@ -118,7 +118,7 @@ class SearchQuery(Query):
         self.frequency = 1.0
         self.metric_counter = 1
 
-        super().__init__(url, collection, **kwargs)
+        super().__init__(url=url, collection=collection, **kwargs)
 
         self._update_dates()
 
@@ -335,7 +335,7 @@ class LeaderboardQuery(Query):
         Raises:
             FieldNameError: If the given field name does not exist for the collection.
         """
-        super().__init__(url, collection, **kwargs)
+        super().__init__(url=url, collection=collection, **kwargs)
 
         if self.collection.name == "swing_take":
             group = self.params["type"][0]

@@ -1,6 +1,6 @@
 import polars as pl
 
-from pastime.field import STATCAST_FIELDS
+from pastime.field import STATCAST_COLLECTIONS
 from pastime.statcast.query import LeaderboardQuery
 
 
@@ -386,7 +386,7 @@ def park_factors(
 
 def query(leaderboard_name: str, **kwargs):
     result = LeaderboardQuery(
-        url=URL, collection=STATCAST_FIELDS[leaderboard_name], **kwargs
+        url=URL, collection=STATCAST_COLLECTIONS[leaderboard_name], **kwargs
     ).request()
 
     return pl.read_csv(result, parse_dates=True, ignore_errors=True).fill_nan(None)

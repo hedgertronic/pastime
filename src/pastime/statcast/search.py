@@ -2,7 +2,7 @@ from datetime import date
 
 import polars as pl
 
-from pastime.field import STATCAST_FIELDS, Param
+from pastime.field import STATCAST_COLLECTIONS, Param
 from pastime.statcast.analysis import spin_columns
 from pastime.statcast.query import SearchQuery
 
@@ -183,7 +183,7 @@ def query(
 ) -> pl.DataFrame:
     search_query = SearchQuery(
         url=URL,
-        collection=STATCAST_FIELDS["search"],
+        collection=STATCAST_COLLECTIONS["search"],
         player_type=player_type,
         min_pitches=min_pitches,
         min_results=min_results,

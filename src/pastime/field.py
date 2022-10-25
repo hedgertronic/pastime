@@ -716,7 +716,7 @@ _fangraphs_data: dict[str, dict[str, Any]] = json.load(
 
 
 # A mapping of collection names to their respective Statcast field collections
-STATCAST_FIELDS: dict[str, Collection] = {
+STATCAST_COLLECTIONS: dict[str, Collection] = {
     _collection_name: Collection(
         _field_data["name"],
         _field_data["slug"],
@@ -727,7 +727,7 @@ STATCAST_FIELDS: dict[str, Collection] = {
 
 
 # A mapping of collection names to their respective Fangraphs field collections
-FANGRAPHS_FIELDS: dict[str, Collection] = {
+FANGRAPHS_COLLECTIONS: dict[str, Collection] = {
     _collection_name: Collection(
         _field_data["name"],
         _field_data["slug"],
