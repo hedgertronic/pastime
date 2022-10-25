@@ -412,8 +412,11 @@
                 "name": "data_type",
                 "slug": "type",
                 "choices": {
-                    "default": "details",
+                    "aggregate": "",
                     "details": "details"
+                },
+                "frequencies": {
+                    "default": 0.005
                 },
                 "field_type": "single-select"
             },
