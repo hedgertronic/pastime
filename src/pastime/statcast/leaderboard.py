@@ -685,7 +685,9 @@ def cli():
     """Parse command line arguments and make a request."""
     parser = argparse.ArgumentParser(description="Make a Statcast leaderboard query.")
 
-    parser.add_argument("-o", "--output", required=True, help="Location to save data")
+    parser.add_argument(
+        "-o", "--output", required=True, help="File location to save data"
+    )
     parser.add_argument(
         "-n", "--name", required=True, help="Name of the leaderboard to access"
     )
@@ -709,6 +711,8 @@ def cli():
 
     data = query(leaderboard_name=leaderboard_name, **valid_args)
     data.write_csv(save_location)
+
+    print(data)
 
 
 if __name__ == "__main__":

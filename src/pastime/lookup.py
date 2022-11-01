@@ -10,6 +10,7 @@ Attributes:
     LOOKUP_COLUMNS (list[str]): Columns to include from the lookup table.
 """
 
+import argparse
 import io
 from typing import cast
 
@@ -47,33 +48,40 @@ LOOKUP_COLUMNS = [
 # LOOKUP METHODS
 
 
-def get_lookup_table(refresh_table: bool = False) -> pl.DataFrame:
+def get_table(refresh_table: bool = False, mlb_only: bool = False) -> pl.DataFrame:
     """Get Chadwick Bureau lookup table.
 
-    If the table doesn't already exist, it will be downloaded and saved to a CSV. If
-    the table already exists, it will be retrieved without downloading. If the user
+    If the table doesn't already exist, it will be downloaded from the original source.
+    If the table already exists, it will be retrieved without downloading. If the user
     believes the table is out of date, they can optionally choose to refresh the lookup
-    table and replace the existing file.
+    table.
 
     Args:
         refresh_table (bool, optional): Whether to refresh the lookup table. Defaults
             to False.
+        mlb_only (bool, optional): Whether to only include players who have played in
+            the majors. Defaults to False.
 
     Returns:
         pl.DataFrame: Lookup table.
     """
     if (
-        not pkg_resources.resource_exists(__name__, "data/lookup_table.csv")
-        or refresh_table
+        pkg_resources.resource_exists(__name__, "data/lookup_table.csv")
+        and not refresh_table
     ):
-        output = io.StringIO()
+        stream = cast(
+            io.BytesIO,
+            pkg_resources.resource_stream(__name__, "data/lookup_table.csv"),
+        )
 
+        lookup_table = pl.read_csv(stream)
+
+    else:
         # The header is included to fix bug where the content-length for the progress
         # bar is not the same as the actual length of the file received.
 
         output = download_file(
             url=LOOKUP_URL,
-            output=output,
             params={},
             request_name="Lookup Table",
             headers={"Accept-Encoding": "identity"},
@@ -111,25 +119,25 @@ def get_lookup_table(refresh_table: bool = False) -> pl.DataFrame:
         )
 
         lookup_table = lookup_table[LOOKUP_COLUMNS]
-        lookup_table.write_csv("data/lookup_table.csv")
-    else:
-        stream = cast(
-            io.BytesIO,
-            pkg_resources.resource_stream(__name__, "data/lookup_table.csv"),
-        )
 
-        lookup_table = pl.read_csv(stream)
-
-    return lookup_table
+    return (
+        lookup_table.drop_nulls(["mlb_played_first", "mlb_played_last"])
+        if mlb_only
+        else lookup_table
+    )
 
 
-def lookup_id(player_id: int | str, *, refresh_table: bool = False) -> pl.DataFrame:
+def lookup_id(
+    player_id: int | str,
+    *,
+    mlb_only: bool = True,
+) -> pl.DataFrame:
     """Get all rows in the lookup table that match the given player ID.
 
     Args:
         player_id (int | str): The ID to lookup in the database.
-        refresh_table (bool, optional): Whether to refresh the lookup table. Defaults
-            to False.
+        mlb_only (bool, optional): Whether to only include players who have played in
+            the majors. Defaults to True.
 
     Raises:
         IdNotFoundError: If the given ID does not exist in the database for any of the
@@ -138,7 +146,7 @@ def lookup_id(player_id: int | str, *, refresh_table: bool = False) -> pl.DataFr
     Returns:
         pl.DataFrame: Lookup table with all rows that match the given player ID.
     """
-    data = get_lookup_table(refresh_table=refresh_table).filter(
+    data = get_table(mlb_only=mlb_only).filter(
         (pl.col("key_mlbam").cast(str) == str(player_id))
         | (pl.col("key_fangraphs").cast(str) == str(player_id))
         | (pl.col("key_bbref").cast(str) == str(player_id))
@@ -154,14 +162,14 @@ def lookup_id(player_id: int | str, *, refresh_table: bool = False) -> pl.DataFr
 def lookup_name(
     name: str,
     *,
-    refresh_table: bool = False,
+    mlb_only: bool = True,
 ) -> pl.DataFrame:
     """Get all rows in the lookup table that match the given player name.
 
     Args:
         name (str): The name to lookup in the database.
-        refresh_table (bool, optional): Whether to refresh the lookup table. Defaults
-            to False.
+        mlb_only (bool, optional): Whether to only include players who have played in
+            the majors. Defaults to True.
 
     Raises:
         NameNotFoundError: If the given name does not exist in the database.
@@ -169,7 +177,7 @@ def lookup_name(
     Returns:
         pl.DataFrame: Lookup table with all rows that match the given player name.
     """
-    lookup_table = get_lookup_table(refresh_table=refresh_table)
+    lookup_table = get_table(mlb_only=mlb_only)
 
     name = name.strip().lower()
 
@@ -185,13 +193,17 @@ def lookup_name(
     return data
 
 
-def get_name(player_id: int | str, *, refresh_table: bool = False) -> str:
+def get_name(
+    player_id: int | str,
+    *,
+    mlb_only: bool = True,
+) -> str:
     """Get a name associated with a particular player ID.
 
     Args:
         player_id (int | str): The ID to lookup in the database.
-        refresh_table (bool, optional): Whether to refresh the lookup table. Defaults
-            to False.
+        mlb_only (bool, optional): Whether to only include players who have played in
+            the majors. Defaults to True.
 
     Raises:
         IdNotFoundError: If the given ID does not exist in the database for any of the
@@ -200,12 +212,12 @@ def get_name(player_id: int | str, *, refresh_table: bool = False) -> str:
     Returns:
         str: Name of the player associated with the given player ID.
     """
-    table = lookup_id(player_id, refresh_table=refresh_table)
+    lookup_table = lookup_id(player_id, mlb_only=mlb_only)
 
-    if table.is_empty():
+    if lookup_table.is_empty():
         raise IdNotFoundError(player_id)
 
-    return table["name_full"][0]
+    return lookup_table["name_full"][0]
 
 
 def get_id(
@@ -213,14 +225,14 @@ def get_id(
     source: str = "mlbam",
     start_year: str = None,
     *,
-    refresh_table: bool = False,
+    mlb_only: bool = True,
 ) -> str:
     """Get an ID associated with a particular player name and source.
 
     Args:
         name (str): The name to lookup in the database.
-        refresh_table (bool, optional): Whether to refresh the lookup table. Defaults
-            to False.
+        mlb_only (bool, optional): Whether to only include players who have played in
+            the majors. Defaults to True.
 
     Raises:
         ValueError: If the source provided is not 'mlbam', 'fangraphs', 'bbref', or
@@ -233,15 +245,62 @@ def get_id(
     if source not in ["mlbam", "fangraphs", "bbref", "retro"]:
         raise ValueError(f"Invalid source: '{source}'")
 
-    table = lookup_name(name, refresh_table=refresh_table)
+    lookup_table = lookup_name(name, mlb_only=mlb_only)
 
-    if len(table) > 1 and start_year:
-        table = table.filter(pl.col("mlb_played_first") == start_year)
+    if len(lookup_table) > 1 and start_year:
+        lookup_table = lookup_table.filter(pl.col("mlb_played_first") == start_year)
 
-    elif len(table) > 1 and not start_year:
-        table = table.sort("mlb_played_first")[-1]
+    elif len(lookup_table) > 1 and not start_year:
+        lookup_table = lookup_table.sort("mlb_played_first")[-1]
 
-    if table.is_empty():
+    if lookup_table.is_empty():
         raise NameNotFoundError(name)
 
-    return str(table[f"key_{source}"][0])
+    return str(lookup_table[f"key_{source}"][0])
+
+
+def cli():
+    """Parse command line arguments and make a request."""
+    parser = argparse.ArgumentParser(
+        description="Make a Chadwick Bureau database query."
+    )
+
+    parser.add_argument("-o", "--output", help="File location to save data")
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Whether to refresh the lookup table",
+    )
+    parser.add_argument(
+        "--mlb_only",
+        action="store_true",
+        help="Whether to get data only for players who have played in the majors",
+    )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument("--id", help="Player ID to lookup")
+    group.add_argument("--name", help="Name to lookup")
+    group.add_argument("--table", help="Get full lookup table", action="store_true")
+
+    args = vars(parser.parse_args())
+
+    save_location = args.pop("output")
+
+    if player_id := args["id"]:
+        data = lookup_id(player_id, mlb_only=args["mlb_only"])
+
+    elif name := args["name"]:
+        data = lookup_name(name, mlb_only=args["mlb_only"])
+
+    elif args["table"]:
+        data = get_table(refresh_table=args["refresh"], mlb_only=args["mlb_only"])
+
+    if save_location:
+        data.write_csv(save_location)
+
+    print(data)
+
+
+if __name__ == "__main__":
+    cli()
