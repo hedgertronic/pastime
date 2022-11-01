@@ -11,6 +11,7 @@ An explanation of the all the fields and values returned from the databse can be
 at https://baseballsavant.mlb.com/csv-docs.
 """
 
+import argparse
 from datetime import date
 
 import polars as pl
@@ -29,7 +30,7 @@ from pastime.statcast.query import SearchQuery
 URL = "https://baseballsavant.mlb.com"
 
 
-# Columns that are deprecated and should not be included in requests.
+# Columns that are deprecated and should not be included in requests
 DEPRECATED_COLUMNS = [
     "spin_dir",
     "spin_rate_deprecated",
@@ -277,7 +278,7 @@ def matchup(
 
 
 def team(
-    team_name: str,
+    team: str,
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
@@ -289,7 +290,7 @@ def team(
     """Get Statcast data for a team.
 
     Args:
-        team_name (str): The team to get data for.
+        team (str): The team to get data for.
         start_date (str | date | None, optional): The earliest date to get in the
             request. Defaults to the start date of the earliest season in the request.
         end_date (str | date | None, optional): The latest date to get in the request.
@@ -309,7 +310,7 @@ def team(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
         aggregate=aggregate,
-        team=team_name,
+        team=team,
         start_date=start_date,
         end_date=end_date,
         **kwargs,
@@ -390,3 +391,40 @@ def query(
         data = spin_columns(data) if add_spin_columns else data
 
     return data
+
+
+def cli():
+    """Parse command line arguments and make a request."""
+    parser = argparse.ArgumentParser(description="Make a Statcast search query.")
+
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("--year")
+    parser.add_argument("--start_date")
+    parser.add_argument("--end_date")
+    parser.add_argument("--team")
+    parser.add_argument("--game_pk")
+    parser.add_argument("--batters")
+    parser.add_argument("--pitchers")
+
+    _, unknown = parser.parse_known_args()
+
+    for arg in unknown:
+        if arg.startswith(("--")):
+            parser.add_argument(arg.split("=", maxsplit=1)[0])
+
+    args = vars(parser.parse_args())
+
+    save_location = args.pop("output")
+
+    valid_args = {
+        arg_key: str(arg_value).split(",")
+        for arg_key, arg_value in args.items()
+        if arg_value
+    }
+
+    data = query(**valid_args)
+    data.write_csv(save_location)
+
+
+if __name__ == "__main__":
+    cli()

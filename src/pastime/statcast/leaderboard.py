@@ -8,6 +8,8 @@ The web version of the leaderboards can be found at
 https://baseballsavant.mlb.com/leaderboard/statcast.
 """
 
+import argparse
+
 import polars as pl
 
 from pastime.statcast.base import STATCAST_COLLECTIONS
@@ -677,3 +679,35 @@ def query(leaderboard_name: str, **kwargs) -> pl.DataFrame:
     ).request()
 
     return pl.read_csv(result, parse_dates=True, ignore_errors=True).fill_nan(None)
+
+
+def cli():
+    """Parse command line arguments and make a request."""
+    parser = argparse.ArgumentParser(description="Make a Statcast leaderboard query.")
+
+    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("-n", "--name", required=True)
+
+    _, unknown = parser.parse_known_args()
+
+    for arg in unknown:
+        if arg.startswith(("--")):
+            parser.add_argument(arg.split("=", maxsplit=1)[0], type=str)
+
+    args = vars(parser.parse_args())
+
+    save_location = args.pop("output")
+    leaderboard_name = args.pop("name")
+
+    valid_args = {
+        arg_key: arg_value.split(",")
+        for arg_key, arg_value in args.items()
+        if arg_value
+    }
+
+    data = query(leaderboard_name=leaderboard_name, **valid_args)
+    data.write_csv(save_location)
+
+
+if __name__ == "__main__":
+    cli()
