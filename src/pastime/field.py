@@ -155,7 +155,9 @@ class SingleSelectField(Field):
 
         else:
             raise FieldValueError(
-                value=value, field_name=self.name, valid_values=self.choices.keys()
+                value=value,
+                field_name=self.name,
+                valid_values=self.choices.keys() | self.choices.values(),
             )
 
         return param
@@ -290,7 +292,9 @@ class MultiSelectField(Field):
 
         else:
             raise FieldValueError(
-                value=value, field_name=self.name, valid_values=self.choices.keys()
+                value=value,
+                field_name=self.name,
+                valid_values=self.choices.keys() | self.choices.values(),
             )
 
         return params
