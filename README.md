@@ -1,6 +1,6 @@
 # Pastime for Python
 
-Tools for acquiring and analyzing baseball data from sources such as [Baseball Savant](https://baseballsavant.mlb.com), [Fangraphs](https://www.fangraphs.com), and [Baseball Reference](https://www.baseball-reference.com).
+Tools for acquiring and analyzing baseball data from sources such as [Statcast](https://baseballsavant.mlb.com), [Fangraphs](https://www.fangraphs.com), and [Baseball-Reference](https://www.baseball-reference.com).
 
 ## Installation
 
