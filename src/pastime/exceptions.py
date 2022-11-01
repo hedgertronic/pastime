@@ -24,9 +24,7 @@ class FieldValueError(ValueError):
     def __init__(self, value: str, field_name: str, valid_values: Iterable[str] = None):
         message = f"'{value}' for field '{field_name}'"
 
-        if valid_values and (
-            close_matches := get_close_matches(field_name, valid_values)
-        ):
+        if valid_values and (close_matches := get_close_matches(value, valid_values)):
             close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
             message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
 
