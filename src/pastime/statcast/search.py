@@ -278,7 +278,7 @@ def matchup(
 
 
 def team(
-    team: str,
+    team_name: str,
     start_date: str | date | None = None,
     end_date: str | date | None = None,
     *,
@@ -310,7 +310,7 @@ def team(
         update_years=update_years,
         add_spin_columns=add_spin_columns,
         aggregate=aggregate,
-        team=team,
+        team=team_name,
         start_date=start_date,
         end_date=end_date,
         **kwargs,
