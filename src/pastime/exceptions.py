@@ -136,21 +136,9 @@ class InvalidSubgroupError(ValueError):
 
 class NameNotFoundError(ValueError):
     def __init__(self, player_name: str):
-        message = (
-            f"'{player_name}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
-
-        super().__init__(message)
+        super().__init__(f"'{player_name}'")
 
 
 class IdNotFoundError(ValueError):
     def __init__(self, player_id: str | int):
-        message = (
-            f"'{player_id}'."
-            " If you think the lookup table may be out of date, you can refresh it by"
-            " including 'refresh=True' in your function call."
-        )
-
-        super().__init__(message)
+        super().__init__(f"'{player_id}'")
