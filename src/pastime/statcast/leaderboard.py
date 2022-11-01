@@ -685,8 +685,10 @@ def cli():
     """Parse command line arguments and make a request."""
     parser = argparse.ArgumentParser(description="Make a Statcast leaderboard query.")
 
-    parser.add_argument("-o", "--output", required=True)
-    parser.add_argument("-n", "--name", required=True)
+    parser.add_argument("-o", "--output", required=True, help="Location to save data")
+    parser.add_argument(
+        "-n", "--name", required=True, help="Name of the leaderboard to access"
+    )
 
     _, unknown = parser.parse_known_args()
 

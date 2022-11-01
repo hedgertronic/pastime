@@ -397,7 +397,7 @@ def cli():
     """Parse command line arguments and make a request."""
     parser = argparse.ArgumentParser(description="Make a Statcast search query.")
 
-    parser.add_argument("-o", "--output", required=True)
+    parser.add_argument("-o", "--output", required=True, help="Location to save data")
     parser.add_argument("--year")
     parser.add_argument("--start_date")
     parser.add_argument("--end_date")
