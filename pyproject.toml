@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pastime"
 version = "1.0.0"
-description = "Tools for acquiring and analyzing baseball data from Statcast, the MLB Stats API, and the Chadwick register."
+description = "Python tools for baseball data from Statcast and the MLB Stats API."
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "Josh Hejka" }]
