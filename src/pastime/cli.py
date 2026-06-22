@@ -26,7 +26,7 @@ from pastime import mlb
 from pastime.exceptions import PastimeError
 from pastime.lookup import lookup
 from pastime.statcast.leaderboards import get_leaderboard, list_leaderboards
-from pastime.statcast.search import statcast_search
+from pastime.statcast.search import search_pitches
 
 #####################################################################
 # Passthrough argument parsing
@@ -156,7 +156,7 @@ def _run_lookup(args: argparse.Namespace, extras: list[str]) -> Any:
 
 def _run_search(args: argparse.Namespace, extras: list[str]) -> Any:
     filters = _parse_extras(extras, pipe_join=True)
-    return statcast_search(
+    return search_pitches(
         args.start,
         args.end,
         player_type=args.player_type,

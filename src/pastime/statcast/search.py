@@ -7,7 +7,7 @@ serves an HTML error page, not a 4xx, when params are unacceptable).
 
 Gotchas folded in from the Statcast skill references:
 
-- **30,000-row hard cap.** :func:`statcast_search` auto-chunks ranges longer
+- **30,000-row hard cap.** :func:`search_pitches` auto-chunks ranges longer
   than 5 days into 1-day requests, fanned through :func:`pastime.http.map_concurrent`.
   Even single high-volume days can approach the cap — add filters.
 - **Pipe-separated params must NOT be URL-encoded.** ``http.request_bytes`` uses
@@ -66,6 +66,7 @@ __all__ = [
     "resolve_team",
     "search_game",
     "search_matchup",
+    "search_pitches",
     "search_team",
     "statcast_search",
 ]
@@ -136,7 +137,7 @@ def _search_base_params(player_type: str = "pitcher") -> dict[str, str]:
 #####################################################################
 
 
-def statcast_search(
+def search_pitches(
     start_date: str,
     end_date: str,
     player_type: str = "pitcher",
@@ -222,6 +223,16 @@ def statcast_search(
     return [row for day_rows in per_day for row in day_rows]
 
 
+def statcast_search(*args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+    """Alias for :func:`search_pitches`.
+
+    Retained for callers familiar with the pre-1.0 API and pybaseball-style
+    naming. New code should prefer ``search_pitches`` inside the
+    ``pastime.statcast`` namespace.
+    """
+    return search_pitches(*args, **kwargs)
+
+
 #####################################################################
 # Convenience query wrappers
 #####################################################################
@@ -274,7 +285,7 @@ def search_matchup(
     matchup_filters = dict(filters)
     matchup_filters["pitchers_lookup[]"] = str(pitcher_id)
     matchup_filters["batters_lookup[]"] = str(batter_id)
-    return statcast_search(
+    return search_pitches(
         start_date,
         end_date,
         player_type="pitcher",
@@ -323,7 +334,7 @@ def search_team(
         team_filters["away_team"] = code
     else:
         team_filters["hfTeam"] = f"{code}|"
-    return statcast_search(
+    return search_pitches(
         start_date,
         end_date,
         player_type="pitcher",
@@ -384,7 +395,7 @@ def aggregate_pitcher_arsenal(
     :func:`~pastime.statcast.physics.axis_to_clock`) when spin axis is present.
 
     Args:
-        rows: ``list[dict]`` from :func:`statcast_search`.
+        rows: ``list[dict]`` from :func:`search_pitches`.
         group_by: Column names to group on.
         metrics: Metric columns to average.
 
@@ -440,7 +451,7 @@ def get_pitcher_arsenal(
 ) -> list[dict[str, Any]]:
     """Fetch a pitcher's pitch-level data and aggregate into an arsenal summary.
 
-    Convenience wrapper: :func:`statcast_search` + :func:`aggregate_pitcher_arsenal`.
+    Convenience wrapper: :func:`search_pitches` + :func:`aggregate_pitcher_arsenal`.
 
     Args:
         pitcher_id: MLBAM pitcher ID.
@@ -452,7 +463,7 @@ def get_pitcher_arsenal(
     Returns:
         ``list[dict]`` — one summary per (pitcher, pitch_type) group.
     """
-    rows = statcast_search(
+    rows = search_pitches(
         start_date,
         end_date,
         player_type="pitcher",

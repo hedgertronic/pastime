@@ -24,7 +24,7 @@ try:
 except PackageNotFoundError:  # pragma: no cover - source tree fallback
     __version__ = "1.0.0"
 
-# Subpackages are the primary surface: `pastime.statcast.statcast_search(...)`,
+# Subpackages are the primary surface: `pastime.statcast.search_pitches(...)`,
 # `pastime.mlb.get_schedule(...)`, `pastime.lookup.lookup(...)`. The names below
 # are the small cross-cutting top level — exceptions, the optional DataFrame
 # bridge, and the shared resolvers. Per-domain functions stay under their

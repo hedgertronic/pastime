@@ -89,6 +89,7 @@ from pastime.mlb.people import (
     get_player_changes,
     get_player_stats_all_sports,
     resolve_player_id,
+    search_player_matches,
     search_players,
 )
 from pastime.mlb.stats import (
@@ -119,6 +120,7 @@ __all__ = [  # noqa: RUF022  -- grouped by module for integration re-export
     "get_people",
     "get_person",
     "search_players",
+    "search_player_matches",
     "find_player",
     "resolve_player_id",
     "get_player_changes",

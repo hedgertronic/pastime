@@ -74,6 +74,7 @@ from pastime.statcast.search import (
     resolve_team,
     search_game,
     search_matchup,
+    search_pitches,
     search_team,
     statcast_search,
 )
@@ -137,6 +138,7 @@ __all__ = [
     "resolve_team",
     "search_game",
     "search_matchup",
+    "search_pitches",
     "search_team",
     "statcast_search",
 ]

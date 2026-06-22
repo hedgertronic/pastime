@@ -54,6 +54,14 @@ def test_fetch_csv_parses_csv(monkeypatch):
 def test_search_5_day_span_single_request(monkeypatch):
     calls = _record(monkeypatch)
     # 2024-06-01 -> 2024-06-06 is .days == 5 -> single request
+    search.search_pitches("2024-06-01", "2024-06-06")
+    assert len(calls) == 1
+    assert calls[0]["params"]["game_date_gt"] == "2024-06-01"
+    assert calls[0]["params"]["game_date_lt"] == "2024-06-06"
+
+
+def test_statcast_search_aliases_search_pitches(monkeypatch):
+    calls = _record(monkeypatch)
     search.statcast_search("2024-06-01", "2024-06-06")
     assert len(calls) == 1
     assert calls[0]["params"]["game_date_gt"] == "2024-06-01"
@@ -63,7 +71,7 @@ def test_search_5_day_span_single_request(monkeypatch):
 def test_search_6_day_span_chunks_into_7_daily_requests(monkeypatch):
     calls = _record(monkeypatch)
     # 2024-06-01 -> 2024-06-07 is .days == 6 -> chunked, 7 inclusive days
-    rows = search.statcast_search("2024-06-01", "2024-06-07", delay=0.0)
+    rows = search.search_pitches("2024-06-01", "2024-06-07", delay=0.0)
     assert len(calls) == 7
     # each chunk targets a single day (gt == lt)
     days = sorted(c["params"]["game_date_gt"] for c in calls)
@@ -85,7 +93,7 @@ def test_search_6_day_span_chunks_into_7_daily_requests(monkeypatch):
 def test_search_start_after_end_raises(monkeypatch):
     _record(monkeypatch)
     with pytest.raises(SavantError, match="after end_date"):
-        search.statcast_search("2024-06-10", "2024-06-01")
+        search.search_pitches("2024-06-10", "2024-06-01")
 
 
 #####################################################################
@@ -95,7 +103,7 @@ def test_search_start_after_end_raises(monkeypatch):
 
 def test_search_pitcher_id_uses_pitchers_lookup(monkeypatch):
     calls = _record(monkeypatch)
-    search.statcast_search(
+    search.search_pitches(
         "2024-06-01", "2024-06-02", player_type="pitcher", player_id=543037
     )
     assert calls[0]["params"]["pitchers_lookup[]"] == "543037"
@@ -103,7 +111,7 @@ def test_search_pitcher_id_uses_pitchers_lookup(monkeypatch):
 
 def test_search_batter_id_uses_batters_lookup(monkeypatch):
     calls = _record(monkeypatch)
-    search.statcast_search(
+    search.search_pitches(
         "2024-06-01", "2024-06-02", player_type="batter", player_id=665742
     )
     assert calls[0]["params"]["batters_lookup[]"] == "665742"

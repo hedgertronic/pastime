@@ -299,10 +299,21 @@ def test_search_players_url_and_params(
     assert params["sportId"] == 1
 
 
-def test_find_player_passes_sport_id(
+def test_search_player_matches_passes_sport_id(
     capture: list[tuple[str, dict | None]],
 ) -> None:
-    # find_player returns [] from the empty mock; assert it scoped by sportId.
+    # search_player_matches returns [] from the empty mock; assert sportId scope.
+    assert people.search_player_matches("Judge", sport_id=11) == []
+    url, params = capture[0]
+    assert url.endswith("/api/v1/people/search")
+    assert params is not None
+    assert params["names"] == "Judge"
+    assert params["sportId"] == 11
+
+
+def test_find_player_aliases_search_player_matches(
+    capture: list[tuple[str, dict | None]],
+) -> None:
     assert people.find_player("Judge", sport_id=11) == []
     url, params = capture[0]
     assert url.endswith("/api/v1/people/search")

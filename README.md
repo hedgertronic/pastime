@@ -66,7 +66,7 @@ Pastime keeps each source under its own namespace:
 ```python
 from pastime import mlb, statcast
 
-pitches = statcast.statcast_search(
+pitches = statcast.search_pitches(
     start_date="2024-03-28",
     end_date="2024-04-03",
     player_type="pitcher",
@@ -89,13 +89,13 @@ The `pastime.statcast` namespace wraps Baseball Savant search, leaderboard, and 
 
 ### Pitch-Level Search
 
-`statcast_search(...)` fetches pitch-level Baseball Savant CSV data. Ranges longer than five days are split into one-day requests and fetched concurrently to avoid Savant's row cap.
+`search_pitches(...)` fetches pitch-level Baseball Savant CSV data. Ranges longer than five days are split into one-day requests and fetched concurrently to avoid Savant's row cap. `statcast_search(...)` remains available as a compatibility alias.
 
 ```python
-from pastime.statcast import statcast_search
+from pastime.statcast import search_pitches
 
 # Every pitch Gerrit Cole (MLBAM 543037) threw in the first week of 2024.
-pitches = statcast_search(
+pitches = search_pitches(
     start_date="2024-03-28",
     end_date="2024-04-03",
     player_type="pitcher",
@@ -117,7 +117,7 @@ Important options:
 Multi-value filters use Baseball Savant's pipe convention:
 
 ```python
-fastballs_sliders = statcast_search(
+fastballs_sliders = search_pitches(
     start_date="2024-04-01",
     end_date="2024-04-30",
     player_id=543037,
@@ -235,16 +235,16 @@ Player/person endpoints:
 
 - `get_people(person_ids, hydrate=None, fields=None)`
 - `get_person(person_id, hydrate=None, fields=None)`
-- `search_players(name, sport_id=1, active_status=None, fields=None)`
-- `find_player(name, sport_id=1)`
+- `search_players(names=None, person_ids=None, active=None, current_team_id=None, sport_id=None)`
+- `search_player_matches(name, sport_id=1)`
 - `resolve_player_id(name, sport_id=1)`
 - `get_player_changes(...)`
 - `get_free_agents(season, order=None)`
-- `get_player_stats_all_sports(person_id, group, stats, ...)`
+- `get_player_stats_all_sports(person_id, season, groups=..., stat_types=..., sport_ids=...)`
 
 ```python
 person = mlb.get_person(545361)
-matches = mlb.search_players("Mike Trout")
+matches = mlb.search_player_matches("Mike Trout")
 ```
 
 ### Teams

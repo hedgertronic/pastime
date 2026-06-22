@@ -81,7 +81,7 @@ def test_empty_list_notes_stderr(monkeypatch, capsys):
 
 
 def test_search_default_format_is_csv(monkeypatch, capsys):
-    _capture(monkeypatch, "statcast_search")
+    _capture(monkeypatch, "search_pitches")
     cli.main(["search", "--start", "2024-04-01", "--end", "2024-04-01"])
     assert capsys.readouterr().out.splitlines()[0] == "player_id,name,velo"
 
@@ -111,7 +111,7 @@ def test_season_single_is_int(monkeypatch):
 
 
 def test_search_passthrough_pipe_joined(monkeypatch):
-    log = _capture(monkeypatch, "statcast_search")
+    log = _capture(monkeypatch, "search_pitches")
     cli.main(
         [
             "search",
@@ -128,7 +128,7 @@ def test_search_passthrough_pipe_joined(monkeypatch):
 
 
 def test_search_passthrough_equals_form(monkeypatch):
-    log = _capture(monkeypatch, "statcast_search")
+    log = _capture(monkeypatch, "search_pitches")
     cli.main(
         ["search", "--start", "2024-04-01", "--end", "2024-04-01", "--hfTeam=LAD|"]
     )

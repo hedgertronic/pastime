@@ -101,7 +101,9 @@ def search_players(
     return mlb_api("/api/v1/people/search", params)
 
 
-def find_player(name: str, sport_id: int | str = 1) -> list[dict[str, Any]]:
+def search_player_matches(
+    name: str, sport_id: int | str = 1
+) -> list[dict[str, Any]]:
     """Return the raw ``people`` list from a name search.
 
     Args:
@@ -113,6 +115,15 @@ def find_player(name: str, sport_id: int | str = 1) -> list[dict[str, Any]]:
     """
     data = search_players(names=name, sport_id=sport_id)
     return data.get("people", []) or []
+
+
+def find_player(name: str, sport_id: int | str = 1) -> list[dict[str, Any]]:
+    """Alias for :func:`search_player_matches`.
+
+    New code should prefer ``search_player_matches`` because it follows the
+    package convention that ``search_*`` helpers return search result rows.
+    """
+    return search_player_matches(name, sport_id=sport_id)
 
 
 def resolve_player_id(name: str, sport_id: int | str = 1) -> int | None:
@@ -127,7 +138,7 @@ def resolve_player_id(name: str, sport_id: int | str = 1) -> int | None:
     Returns:
         The resolved MLBAM id, or ``None`` if no match.
     """
-    people = find_player(name, sport_id=sport_id)
+    people = search_player_matches(name, sport_id=sport_id)
     if not people:
         return None
     if len(people) == 1:
