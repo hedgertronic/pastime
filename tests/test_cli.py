@@ -1,0 +1,266 @@
+"""Offline tests for the ``pastime`` CLI.
+
+Underlying library functions are monkeypatched in the ``pastime.cli`` namespace,
+so nothing here touches the network. Each test exercises rendering, format
+defaults, passthrough parsing, or dispatch — never live data.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import pytest
+
+from pastime import cli
+
+#####################################################################
+# Fixtures / helpers
+#####################################################################
+
+ROWS: list[dict[str, Any]] = [
+    {"player_id": "1", "name": "A", "velo": "95"},
+    {"player_id": "2", "name": "B", "velo": "97"},
+]
+
+
+def _capture(monkeypatch, name: str) -> dict[str, Any]:
+    """Patch ``cli.<name>`` with a recorder returning ``ROWS``; return the call log."""
+    log: dict[str, Any] = {}
+
+    def fake(*args: Any, **kwargs: Any) -> list[dict]:
+        log["args"] = args
+        log["kwargs"] = kwargs
+        return ROWS
+
+    monkeypatch.setattr(cli, name, fake)
+    return log
+
+
+#####################################################################
+# Rendering
+#####################################################################
+
+
+def test_csv_rendering(monkeypatch, capsys):
+    _capture(monkeypatch, "lookup")
+    assert cli.main(["lookup", "--name", "trout"]) == 0
+    out = capsys.readouterr().out.strip().splitlines()
+    assert out[0] == "player_id,name,velo"
+    assert out[1] == "1,A,95"
+    assert out[2] == "2,B,97"
+
+
+def test_json_rendering(monkeypatch, capsys):
+    _capture(monkeypatch, "lookup")
+    cli.main(["lookup", "--name", "trout", "--format", "json"])
+    assert json.loads(capsys.readouterr().out) == ROWS
+
+
+def test_csv_fieldnames_union(monkeypatch, capsys):
+    def fake(*a: Any, **k: Any) -> list[dict]:
+        return [{"x": "1"}, {"x": "2", "y": "3"}]
+
+    monkeypatch.setattr(cli, "lookup", fake)
+    cli.main(["lookup"])
+    header = capsys.readouterr().out.splitlines()[0]
+    assert header == "x,y"
+
+
+def test_empty_list_notes_stderr(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "lookup", lambda *a, **k: [])
+    cli.main(["lookup"])
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "no rows" in captured.err
+
+
+#####################################################################
+# Format defaults
+#####################################################################
+
+
+def test_search_default_format_is_csv(monkeypatch, capsys):
+    _capture(monkeypatch, "statcast_search")
+    cli.main(["search", "--start", "2024-04-01", "--end", "2024-04-01"])
+    assert capsys.readouterr().out.splitlines()[0] == "player_id,name,velo"
+
+
+def test_mlb_default_format_is_json(monkeypatch, capsys):
+    monkeypatch.setattr(cli.mlb, "get_person", lambda **k: {"id": 1, "name": "X"})
+    monkeypatch.setattr(cli.mlb, "__all__", ["get_person"])
+    cli.main(["mlb", "get_person", "--person-id", "545361"])
+    assert json.loads(capsys.readouterr().out) == {"id": 1, "name": "X"}
+
+
+#####################################################################
+# Argument parsing
+#####################################################################
+
+
+def test_season_comma_list_parsed(monkeypatch):
+    log = _capture(monkeypatch, "get_leaderboard")
+    cli.main(["leaderboard", "bat-tracking", "--season", "2023,2024"])
+    assert log["kwargs"]["year"] == [2023, 2024]
+
+
+def test_season_single_is_int(monkeypatch):
+    log = _capture(monkeypatch, "get_leaderboard")
+    cli.main(["leaderboard", "exit-velocity-barrels", "--season", "2024"])
+    assert log["kwargs"]["year"] == 2024
+
+
+def test_search_passthrough_pipe_joined(monkeypatch):
+    log = _capture(monkeypatch, "statcast_search")
+    cli.main(
+        [
+            "search",
+            "--start",
+            "2024-04-01",
+            "--end",
+            "2024-04-01",
+            "--pitch-type",
+            "FF,SL",
+        ]
+    )
+    # comma -> pipe, and key dash -> underscore
+    assert log["kwargs"]["pitch_type"] == "FF|SL"
+
+
+def test_search_passthrough_equals_form(monkeypatch):
+    log = _capture(monkeypatch, "statcast_search")
+    cli.main(
+        ["search", "--start", "2024-04-01", "--end", "2024-04-01", "--hfTeam=LAD|"]
+    )
+    assert log["kwargs"]["hfTeam"] == "LAD|"
+
+
+def test_search_passthrough_malformed_token_errors():
+    with pytest.raises(SystemExit, match="unexpected argument"):
+        cli.main(["search", "--start", "2024-04-01", "--end", "2024-04-01", "oops"])
+
+
+def test_search_passthrough_missing_value_errors():
+    with pytest.raises(SystemExit, match="missing value"):
+        cli.main(["search", "--start", "2024-04-01", "--end", "2024-04-01", "--hfTeam"])
+
+
+def test_leaderboard_passthrough_not_pipe_joined(monkeypatch):
+    log = _capture(monkeypatch, "get_leaderboard")
+    cli.main(["leaderboard", "custom", "--season", "2024", "--custom-col", "a,b,c"])
+    # leaderboard passthrough is verbatim (no pipe-join)
+    assert log["kwargs"]["custom_col"] == "a,b,c"
+
+
+def test_lookup_rejects_passthrough_extras(monkeypatch):
+    _capture(monkeypatch, "lookup")
+    with pytest.raises(SystemExit, match="unexpected arguments"):
+        cli.main(["lookup", "--name", "trout", "--extra-filter", "x"])
+
+
+def test_leaderboard_missing_slug_errors():
+    with pytest.raises(SystemExit, match="slug is required"):
+        cli.main(["leaderboard"])
+
+
+def test_leaderboard_type_and_player_id(monkeypatch):
+    log = _capture(monkeypatch, "get_leaderboard")
+    cli.main(
+        [
+            "leaderboard",
+            "bat-tracking",
+            "--type",
+            "batter",
+            "--player-id",
+            "545361",
+        ]
+    )
+    assert log["kwargs"]["type"] == "batter"
+    assert log["kwargs"]["player_id"] == "545361"
+
+
+def test_mlb_passthrough_verbatim(monkeypatch):
+    log: dict[str, Any] = {}
+    monkeypatch.setattr(
+        cli.mlb,
+        "get_people",
+        lambda **k: log.update(k) or {"ok": True},
+    )
+    monkeypatch.setattr(cli.mlb, "__all__", ["get_people"])
+    cli.main(["mlb", "get_people", "--person-ids=605151,592450"])
+    assert log["person_ids"] == "605151,592450"
+
+
+#####################################################################
+# Errors and listing
+#####################################################################
+
+
+def test_csv_on_nested_dict_errors(monkeypatch):
+    monkeypatch.setattr(cli.mlb, "get_person", lambda **k: {"id": 1})
+    monkeypatch.setattr(cli.mlb, "__all__", ["get_person"])
+    with pytest.raises(SystemExit, match="json"):
+        cli.main(["mlb", "get_person", "--format", "csv"])
+
+
+def test_mlb_unknown_function_errors():
+    with pytest.raises(SystemExit, match="unknown function"):
+        cli.main(["mlb", "not_a_real_function"])
+
+
+def test_mlb_missing_function_errors():
+    with pytest.raises(SystemExit, match="function name is required"):
+        cli.main(["mlb"])
+
+
+def test_pastime_error_reported_cleanly(monkeypatch, capsys):
+    # A PastimeError from the library is caught at the main() boundary: clean
+    # one-line `error:` on stderr + exit 1, no traceback.
+    from pastime.exceptions import ValidationError
+
+    def boom(*a: Any, **k: Any) -> list[dict]:
+        raise ValidationError("nope", "slug")
+
+    monkeypatch.setattr(cli, "get_leaderboard", boom)
+    assert cli.main(["leaderboard", "nope"]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("error: ")
+
+
+def test_unexpected_exception_propagates(monkeypatch):
+    # A non-PastimeError (a real bug) is NOT swallowed — it surfaces a traceback.
+    def boom(*a: Any, **k: Any) -> list[dict]:
+        raise KeyError("bug")
+
+    monkeypatch.setattr(cli, "lookup", boom)
+    with pytest.raises(KeyError):
+        cli.main(["lookup", "--name", "x"])
+
+
+def test_leaderboard_list(capsys):
+    assert cli.main(["leaderboard", "--list"]) == 0
+    out = capsys.readouterr().out
+    assert "slug" in out
+    assert "bat-tracking" in out
+
+
+def test_mlb_list(capsys):
+    assert cli.main(["mlb", "--list"]) == 0
+    out = capsys.readouterr().out
+    assert "function" in out
+    assert "get_person" in out
+
+
+#####################################################################
+# Output file
+#####################################################################
+
+
+def test_output_to_file(monkeypatch, tmp_path):
+    _capture(monkeypatch, "lookup")
+    target = tmp_path / "out.csv"
+    cli.main(["lookup", "--name", "x", "-o", str(target)])
+    text = target.read_text(encoding="utf-8")
+    assert text.splitlines()[0] == "player_id,name,velo"
+    assert "1,A,95" in text

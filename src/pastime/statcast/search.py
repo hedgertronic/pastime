@@ -1,434 +1,463 @@
+"""Baseball Savant (Statcast) pitch-level search.
+
+Returns raw ``list[dict]`` (one dict per pitch); all CSV values are strings —
+callers cast themselves. Built on :mod:`pastime.http` for transport, retry, and
+CSV parsing; this module adds the Savant-specific HTML-vs-CSV detection (Savant
+serves an HTML error page, not a 4xx, when params are unacceptable).
+
+Gotchas folded in from the Statcast skill references:
+
+- **30,000-row hard cap.** :func:`statcast_search` auto-chunks ranges longer
+  than 5 days into 1-day requests, fanned through :func:`pastime.http.map_concurrent`.
+  Even single high-volume days can approach the cap — add filters.
+- **Pipe-separated params must NOT be URL-encoded.** ``http.request_bytes`` uses
+  ``safe="|"``. Join multi-value filters with ``"|"`` (e.g. ``"FF|SL|CH|"``).
+- **MiLB search:** pass ``level="milb"`` to hit ``/statcast-search-minors/csv``.
+  MLBAM IDs are shared across MLB/MiLB. Coverage: AAA 2023+, PCL+Charlotte 2022,
+  Single-A FSL 2021+; no Double-A / High-A.
+- **All CSV values are strings.** Empty cells are ``""``. Pre-2015 rows are Pitch
+  F/X, not Statcast (spin/EV/LA unreliable or missing).
+
+New pitch-by-pitch bat-tracking / miss-distance columns now present in the
+``type=details`` search output (verified live; absent from older docs):
+
+    bat_speed                                   bat head speed, mph
+    swing_length                                swing path length, feet
+    miss_distance                               whiff miss distance, inches
+                                                (per-pitch; ~6.19 on a whiff)
+    attack_angle                                vertical bat angle at intercept, degrees
+    attack_direction                            horizontal bat direction at intercept,
+                                                degrees (negative = toward pull side)
+    swing_path_tilt                             swing-plane tilt, degrees
+    intercept_ball_minus_batter_pos_x_inches    ball-vs-batter X offset, inches
+    intercept_ball_minus_batter_pos_y_inches    ball-vs-batter Y offset, inches
+
+Related Hawk-Eye columns also present: ``arm_angle`` (deg),
+``api_break_z_with_gravity`` / ``api_break_x_arm`` / ``api_break_x_batter_in``
+(inches), ``hyper_speed`` (mph).
 """
-Make requests to the Statcast database.
 
-This module provides a set of functions that allow for querying and downloading data
-from the Baseball Savant Statcast Search database.
+from __future__ import annotations
 
-The web version of the database can be found at
-https://baseballsavant.mlb.com/statcast_search.
+from collections import defaultdict
+from datetime import datetime, timedelta
+from typing import Any
 
-An explanation of the all the fields and values returned from the databse can be found
-at https://baseballsavant.mlb.com/csv-docs.
-"""
+from pastime import constants, http
+from pastime.constants import resolve_team  # re-exported for convenience
+from pastime.exceptions import SavantError
+from pastime.statcast.physics import axis_to_clock
 
-import argparse
-from datetime import date
+#####################################################################
+# Constants
+#####################################################################
 
-import polars as pl
+BASE_URL = "https://baseballsavant.mlb.com"
+SEARCH_PATH_MLB = "/statcast_search/csv"
+SEARCH_PATH_MILB = "/statcast-search-minors/csv"
+MAX_ROWS_PER_QUERY = 30_000
+DEFAULT_CHUNK_DAYS = 1
+DEFAULT_DELAY = 1.0  # seconds between chunked requests
 
-from pastime.field import Param
-from pastime.statcast.analysis import spin_columns
-from pastime.statcast.base import STATCAST_COLLECTIONS
-from pastime.statcast.query import SearchQuery
-
-
-#######################################################################################
-# USEFUL CONSTANTS
-
-
-# The base URL for Baseball Savant
-URL = "https://baseballsavant.mlb.com"
-
-
-# Columns that are deprecated and should not be included in requests
-DEPRECATED_COLUMNS = [
-    "spin_dir",
-    "spin_rate_deprecated",
-    "break_angle_deprecated",
-    "break_length_deprecated",
-    "tfs_deprecated",
-    "tfs_zulu_deprecated",
-    "umpire",
-    "pitcher_duplicated_0",
-    "fielder_2_duplicated_0",
+__all__ = [
+    "aggregate_pitcher_arsenal",
+    "fetch_csv",
+    "get_pitcher_arsenal",
+    "resolve_team",
+    "search_game",
+    "search_matchup",
+    "search_team",
+    "statcast_search",
 ]
 
 
-#######################################################################################
-# STATCAST SEARCH FUNCTIONS
+#####################################################################
+# Core: fetch_csv (HTML detection lives here)
+#####################################################################
 
 
-def season(
-    year: Param,
-    *,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast data for a full season.
+def fetch_csv(
+    url: str, params: dict[str, Any] | None = None, **kw: Any
+) -> list[dict[str, Any]]:
+    """Fetch a CSV endpoint from Baseball Savant and return ``list[dict]``.
 
-    This will require many separate requests and will take a while.
-
-    Args:
-        year (Param): The year to get data for.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    return query(
-        update_years=False,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        year=year,
-        start_date=None,
-        end_date=None,
-        **kwargs,
-    )
-
-
-def dates(
-    start_date: str | date | None = None,
-    end_date: str | date | None = None,
-    *,
-    update_years: bool = True,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast for a certain range of dates.
+    Wraps :func:`pastime.http.request_bytes` + :func:`pastime.http.parse_csv`,
+    adding Savant-specific HTML detection: Savant returns an HTML page (HTTP 200)
+    rather than a 4xx when given parameters it cannot serve as CSV. That HTML is
+    detected here and surfaced as a :class:`~pastime.exceptions.SavantError`.
 
     Args:
-        start_date (str | date | None, optional): The earliest date to get in the
-            request. Defaults to today's date or end date if provided.
-        end_date (str | date | None, optional): The latest date to get in the request.
-            Defaults to today's date or start date if provided.
-        update_years (bool, optional): Whether to update the years included in the
-            request to reflect the dates provided in the request. Defaults to True.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
+        url: Full URL (query string optional).
+        params: Query parameters to append. ``None`` values are dropped by
+            transport.
+        **kw: Forwarded to :func:`pastime.http.request_bytes` (``retries``,
+            ``timeout``, ``headers``).
 
     Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
+        ``list[dict]`` — one dict per CSV row; ``[]`` if there are no data rows.
+
+    Raises:
+        SavantError: If the response body is HTML rather than CSV.
+        RequestError: On transport failure (raised by ``request_bytes``).
     """
-    if not start_date and end_date:
-        end_date = date.today()
-        start_date = date.today()
+    raw = http.request_bytes(url, params=params, **kw)
 
-    return query(
-        update_years=update_years,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        start_date=start_date or end_date,
-        end_date=end_date or start_date,
-        **kwargs,
-    )
-
-
-def game(
-    game_pk: str | int,
-    *,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast data for an individual game.
-
-    Args:
-        game_pk (str | int): The primary key of the game to retrieve.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    return query(
-        update_years=False,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        game_pk=game_pk,
-        year="all years",
-        start_date=None,
-        end_date=None,
-        **kwargs,
-    )
-
-
-def pitcher(
-    pitchers: Param,
-    start_date: str | date | None = None,
-    end_date: str | date | None = None,
-    *,
-    update_years: bool = True,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast data for a pitcher or list of pitchers.
-
-    Args:
-        pitchers (Param): The pitcher ID or IDs to retrieve data for.
-        start_date (str | date | None, optional): The earliest date to get in the
-            request. Defaults to the start date of the earliest season in the request.
-        end_date (str | date | None, optional): The latest date to get in the request.
-            Defaults to the end date of the latest season in the request.
-        update_years (bool, optional): Whether to update the years included in the
-            request to reflect the dates provided in the request. Defaults to True.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    return query(
-        update_years=update_years,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        pitchers=pitchers,
-        start_date=start_date,
-        end_date=end_date,
-        **kwargs,
-    )
-
-
-def batter(
-    batters: Param,
-    start_date: str | date | None = None,
-    end_date: str | date | None = None,
-    *,
-    update_years: bool = True,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast data for a batter or list of batters.
-
-    Args:
-        batter (Param): The batter ID or IDs to retrieve data for.
-        start_date (str | date | None, optional): The earliest date to get in the
-            request. Defaults to the start date of the earliest season in the request.
-        end_date (str | date | None, optional): The latest date to get in the request.
-            Defaults to the end date of the latest season in the request.
-        update_years (bool, optional): Whether to update the years included in the
-            request to reflect the dates provided in the request. Defaults to True.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    return query(
-        update_years=update_years,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        batters=batters,
-        start_date=start_date,
-        end_date=end_date,
-        **kwargs,
-    )
-
-
-def matchup(
-    pitchers: Param,
-    batters: Param,
-    start_date: str | date | None = None,
-    end_date: str | date | None = None,
-    *,
-    update_years: bool = True,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast data for batter/pitcher matchups.
-
-    Args:
-        pitchers (Param): The pitcher ID or IDs to retrieve data for.
-        batters (Param): The batter ID or IDs to retrieve data for.
-        start_date (str | date | None, optional): The earliest date to get in the
-            request. Defaults to the start date of the earliest season in the request.
-        end_date (str | date | None, optional): The latest date to get in the request.
-            Defaults to the end date of the latest season in the request.
-        update_years (bool, optional): Whether to update the years included in the
-            request to reflect the dates provided in the request. Defaults to True.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    return query(
-        update_years=update_years,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        pitchers=pitchers,
-        batters=batters,
-        start_date=start_date,
-        end_date=end_date,
-        **kwargs,
-    )
-
-
-def team(
-    team_name: str,
-    start_date: str | date | None = None,
-    end_date: str | date | None = None,
-    *,
-    update_years: bool = True,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Get Statcast data for a team.
-
-    Args:
-        team (str): The team to get data for.
-        start_date (str | date | None, optional): The earliest date to get in the
-            request. Defaults to the start date of the earliest season in the request.
-        end_date (str | date | None, optional): The latest date to get in the request.
-            Defaults to the end date of the latest season in the request.
-        update_years (bool, optional): Whether to update the years included in the
-            request to reflect the dates provided in the request. Defaults to True.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    return query(
-        update_years=update_years,
-        add_spin_columns=add_spin_columns,
-        aggregate=aggregate,
-        team=team_name,
-        start_date=start_date,
-        end_date=end_date,
-        **kwargs,
-    )
-
-
-def query(
-    update_years: bool = True,
-    add_spin_columns: bool = True,
-    aggregate: bool = False,
-    *,
-    player_type: Param = "pitcher",
-    min_pitches: Param = "0",
-    min_results: Param = "0",
-    group_by: Param = "player name",
-    sort_by: Param = "pitches",
-    player_event_sort: Param = "exit velocity",
-    min_pa: Param = "0",
-    season_type: Param = "regular season",
-    year: Param = "2022",
-    **kwargs: Param,
-) -> pl.DataFrame:
-    """Make a Statcast search query.
-
-    Args:
-        update_years (bool, optional): Whether to update the years included in the
-            request to reflect the dates provided in the request. Defaults to True.
-        add_spin_columns (bool, optional): Whether to add spin columns to the data.
-            Defaults to True.
-        aggregate (bool, optional): Whether to aggregate the data or keep invididual
-            pitch-by-pitch. Defaults to False.
-        player_type (Param, optional): The player type to set the `player_type` field
-            in the returned data. Defaults to "pitcher".
-        min_pitches (Param, optional): The minimum number of pitches. Defaults to "0".
-        min_results (Param, optional): The minimum number of results. Defaults to "0".
-        group_by (Param, optional): Field to group by. Defaults to "player name".
-        sort_by (Param, optional): Field to sort by. Defaults to "pitches".
-        player_event_sort (Param, optional): Field to sort individual player events.
-            Defaults to "exit velocity".
-        min_pa (Param, optional): The minimum number of PAs. Defaults to "0".
-        season_type (Param, optional): The type of season. Defaults to "regular season".
-        year (Param, optional): The year. Defaults to "2022".
-        kwargs (Param, optional): Additional params to include in the request.
-
-    Returns:
-        pl.DataFrame: The returned, cleaned, and sorted data.
-    """
-    search_query = SearchQuery(
-        url=URL,
-        collection=STATCAST_COLLECTIONS["search"],
-        player_type=player_type,
-        min_pitches=min_pitches,
-        min_results=min_results,
-        group_by=group_by,
-        sort_by=sort_by,
-        player_event_sort=player_event_sort,
-        sort_order="desc",
-        min_pa=min_pa,
-        data_type="aggregate" if aggregate else "details",
-        get_all="true",
-        season_type=season_type,
-        year=year,
-        **kwargs,
-    )
-
-    if update_years:
-        search_query.update_years()
-
-    data = pl.read_csv(search_query.request(), parse_dates=True, ignore_errors=True)
-
-    if not aggregate:
-        data = (
-            data.drop_nulls(subset="game_date")
-            .drop(DEPRECATED_COLUMNS)
-            .sort(["game_date", "game_pk", "at_bat_number", "pitch_number"])
+    text = raw.decode("utf-8-sig", errors="replace")
+    if text.lstrip()[:200].lower().startswith(("<!doctype", "<html")):
+        raise SavantError(
+            f"Received HTML instead of CSV from {url}. "
+            "The endpoint may not support the given parameters."
         )
 
-        data = spin_columns(data) if add_spin_columns else data
-
-    return data
+    return http.parse_csv(text)
 
 
-def cli():
-    """Parse command line arguments and make a request."""
-    parser = argparse.ArgumentParser(description="Make a Statcast search query.")
+#####################################################################
+# Search base params
+#####################################################################
 
-    parser.add_argument(
-        "-o", "--output", required=True, help="File location to save data"
-    )
-    parser.add_argument("--year")
-    parser.add_argument("--start_date")
-    parser.add_argument("--end_date")
-    parser.add_argument("--team")
-    parser.add_argument("--game_pk")
-    parser.add_argument("--batters")
-    parser.add_argument("--pitchers")
 
-    _, unknown = parser.parse_known_args()
-
-    for arg in unknown:
-        if arg.startswith(("--")):
-            parser.add_argument(arg.split("=", maxsplit=1)[0])
-
-    args = vars(parser.parse_args())
-
-    save_location = args.pop("output")
-
-    valid_args = {
-        arg_key: str(arg_value).split(",")
-        for arg_key, arg_value in args.items()
-        if arg_value
+def _search_base_params(player_type: str = "pitcher") -> dict[str, str]:
+    return {
+        "all": "true",
+        "type": "details",
+        "player_type": player_type,
+        "group_by": "name",
+        "sort_col": "pitches",
+        "sort_order": "desc",
+        "min_pitches": "0",
+        "min_results": "0",
+        "min_abs": "0",
     }
 
-    data = query(**valid_args)
-    data.write_csv(save_location)
 
-    print(data)
+#####################################################################
+# Statcast search
+#####################################################################
 
 
-if __name__ == "__main__":
-    cli()
+def statcast_search(
+    start_date: str,
+    end_date: str,
+    player_type: str = "pitcher",
+    player_id: int | str | None = None,
+    level: str = "mlb",
+    *,
+    max_workers: int = 4,
+    delay: float = DEFAULT_DELAY,
+    progress: bool = False,
+    **filters: Any,
+) -> list[dict[str, Any]]:
+    """Fetch pitch-level Statcast data from Baseball Savant.
+
+    Ranges spanning more than 5 days are auto-chunked into 1-day requests (the
+    30k-row cap defense) and fanned through :func:`pastime.http.map_concurrent`
+    with a bounded thread pool, a politeness ``delay`` between submissions, and
+    opt-in progress. Per-day results are flattened in date order.
+
+    Args:
+        start_date: ``"YYYY-MM-DD"`` start (inclusive).
+        end_date: ``"YYYY-MM-DD"`` end (inclusive).
+        player_type: ``"pitcher"`` or ``"batter"``.
+        player_id: MLBAM player ID. Emitted as ``pitchers_lookup[]`` /
+            ``batters_lookup[]`` per ``player_type``. Optional.
+        level: ``"mlb"`` (default) or ``"milb"``.
+        max_workers: Max concurrent fetches when chunking.
+        delay: Seconds between chunk submissions.
+        progress: If True, show a progress bar when ``rich`` is installed.
+        **filters: Additional raw Savant search params (``team``, ``hfPT``,
+            ``hfTeam``, etc.), passed through verbatim.
+
+    Returns:
+        ``list[dict]`` — one dict per pitch.
+
+    Raises:
+        SavantError: If ``start_date`` is after ``end_date``, or a response is
+            HTML rather than CSV.
+    """
+    dt_start = datetime.strptime(start_date, "%Y-%m-%d")
+    dt_end = datetime.strptime(end_date, "%Y-%m-%d")
+
+    if dt_start > dt_end:
+        raise SavantError(f"start_date {start_date} is after end_date {end_date}")
+
+    path = SEARCH_PATH_MILB if level == "milb" else SEARCH_PATH_MLB
+    base = f"{BASE_URL}{path}"
+
+    base_params = _search_base_params(player_type)
+
+    if player_id is not None:
+        key = "pitchers_lookup[]" if player_type == "pitcher" else "batters_lookup[]"
+        base_params[key] = str(player_id)
+
+    base_params.update(filters)
+
+    day_span = (dt_end - dt_start).days
+    if day_span <= 5:
+        single = dict(base_params)
+        single["game_date_gt"] = start_date
+        single["game_date_lt"] = end_date
+        return fetch_csv(base, params=single)
+
+    days: list[str] = []
+    current = dt_start
+    while current <= dt_end:
+        days.append(current.strftime("%Y-%m-%d"))
+        current += timedelta(days=1)
+
+    def fetch_day(day: str) -> list[dict[str, Any]]:
+        day_params = dict(base_params)
+        day_params["game_date_gt"] = day
+        day_params["game_date_lt"] = day
+        return fetch_csv(base, params=day_params)
+
+    per_day = http.map_concurrent(
+        fetch_day,
+        days,
+        max_workers=max_workers,
+        delay=delay,
+        progress=progress,
+        label="statcast_search",
+    )
+    return [row for day_rows in per_day for row in day_rows]
+
+
+#####################################################################
+# Convenience query wrappers
+#####################################################################
+
+
+def search_game(
+    game_pk: int | str, level: str = "mlb", **filters: Any
+) -> list[dict[str, Any]]:
+    """Fetch every pitch from a single game by ``game_pk``.
+
+    Args:
+        game_pk: MLB game_pk.
+        level: ``"mlb"`` or ``"milb"``.
+        **filters: Additional raw Savant search params.
+
+    Returns:
+        ``list[dict]`` — one pitch per row.
+    """
+    path = SEARCH_PATH_MILB if level == "milb" else SEARCH_PATH_MLB
+    params = _search_base_params()
+    params["game_pk"] = str(game_pk)
+    params.update(filters)
+    return fetch_csv(f"{BASE_URL}{path}", params=params)
+
+
+def search_matchup(
+    pitcher_id: int | str,
+    batter_id: int | str,
+    start_date: str,
+    end_date: str,
+    level: str = "mlb",
+    *,
+    delay: float = DEFAULT_DELAY,
+    **filters: Any,
+) -> list[dict[str, Any]]:
+    """Fetch every pitch between one pitcher and one batter over a date range.
+
+    Args:
+        pitcher_id: MLBAM pitcher ID.
+        batter_id: MLBAM batter ID.
+        start_date: ``"YYYY-MM-DD"`` (inclusive).
+        end_date: ``"YYYY-MM-DD"`` (inclusive).
+        level: ``"mlb"`` or ``"milb"``.
+        delay: Seconds between chunk submissions.
+        **filters: Additional raw Savant search params.
+
+    Returns:
+        ``list[dict]`` — one pitch per row.
+    """
+    matchup_filters = dict(filters)
+    matchup_filters["pitchers_lookup[]"] = str(pitcher_id)
+    matchup_filters["batters_lookup[]"] = str(batter_id)
+    return statcast_search(
+        start_date,
+        end_date,
+        player_type="pitcher",
+        player_id=None,
+        level=level,
+        delay=delay,
+        **matchup_filters,
+    )
+
+
+def search_team(
+    team: str,
+    start_date: str,
+    end_date: str,
+    side: str = "any",
+    level: str = "mlb",
+    *,
+    delay: float = DEFAULT_DELAY,
+    **filters: Any,
+) -> list[dict[str, Any]]:
+    """Fetch every pitch involving a team over a date range.
+
+    The ``team`` argument is resolved via :func:`pastime.constants.resolve_team`,
+    so a code (``"LAD"``), full name, city, or alias (``"Dodgers"``) all work.
+
+    Args:
+        team: Team code / name / city / alias.
+        start_date: ``"YYYY-MM-DD"`` (inclusive).
+        end_date: ``"YYYY-MM-DD"`` (inclusive).
+        side: ``"any"`` (team on either side), ``"home"``, or ``"away"``.
+        level: ``"mlb"`` or ``"milb"``.
+        delay: Seconds between chunk submissions.
+        **filters: Additional raw Savant search params.
+
+    Returns:
+        ``list[dict]`` — one pitch per row.
+
+    Raises:
+        ValidationError: If ``team`` resolves to no known club.
+    """
+    code = constants.resolve_team(team)
+    team_filters = dict(filters)
+    if side == "home":
+        team_filters["home_team"] = code
+    elif side == "away":
+        team_filters["away_team"] = code
+    else:
+        team_filters["hfTeam"] = f"{code}|"
+    return statcast_search(
+        start_date,
+        end_date,
+        player_type="pitcher",
+        player_id=None,
+        level=level,
+        delay=delay,
+        **team_filters,
+    )
+
+
+#####################################################################
+# Aggregation
+#####################################################################
+
+_ARSENAL_METRICS: tuple[str, ...] = (
+    "release_speed",
+    "release_spin_rate",
+    "effective_speed",
+    "release_extension",
+    "release_pos_x",
+    "release_pos_z",
+    "pfx_x",
+    "pfx_z",
+    "plate_x",
+    "plate_z",
+    "launch_speed",
+    "launch_angle",
+    "spin_axis",
+)
+
+
+def _coerce_float(value: object) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+
+
+def _mean(values: list[float | None]) -> float | None:
+    present = [v for v in values if v is not None]
+    return sum(present) / len(present) if present else None
+
+
+def aggregate_pitcher_arsenal(
+    rows: list[dict[str, Any]],
+    group_by: tuple[str, ...] = ("pitcher", "pitch_type"),
+    metrics: tuple[str, ...] = _ARSENAL_METRICS,
+) -> list[dict[str, Any]]:
+    """Aggregate pitch-level rows into per-group summaries.
+
+    Returns one dict per group (default ``(pitcher, pitch_type)``) with the group
+    keys, ``player_name`` / ``p_throws`` carried from the first member if present,
+    ``n_pitches``, ``usage_pct`` (share of that pitcher's total pitches when
+    grouping on ``pitcher``), ``avg_<metric>`` means (``None`` if all missing),
+    and ``avg_tilt`` (clock string from ``avg_spin_axis`` via
+    :func:`~pastime.statcast.physics.axis_to_clock`) when spin axis is present.
+
+    Args:
+        rows: ``list[dict]`` from :func:`statcast_search`.
+        group_by: Column names to group on.
+        metrics: Metric columns to average.
+
+    Returns:
+        ``list[dict]`` — one summary per group.
+    """
+    groups: dict[tuple[Any, ...], list[dict[str, Any]]] = defaultdict(list)
+    for r in rows:
+        key = tuple(r.get(k, "") for k in group_by)
+        groups[key].append(r)
+
+    per_pitcher: dict[str, int] = defaultdict(int)
+    pitcher_idx = group_by.index("pitcher") if "pitcher" in group_by else None
+    if pitcher_idx is not None:
+        for key, grp in groups.items():
+            per_pitcher[key[pitcher_idx]] += len(grp)
+
+    out: list[dict[str, Any]] = []
+    for key, grp in groups.items():
+        row: dict[str, Any] = {group_by[i]: key[i] for i in range(len(group_by))}
+        first = grp[0]
+        for carry in ("player_name", "p_throws"):
+            if carry in first and carry not in row:
+                row[carry] = first.get(carry, "")
+        row["n_pitches"] = len(grp)
+        if pitcher_idx is not None:
+            total = per_pitcher[key[pitcher_idx]]
+            row["usage_pct"] = 100.0 * len(grp) / total if total else 0.0
+
+        for m in metrics:
+            vals = [_coerce_float(r.get(m)) for r in grp]
+            row[f"avg_{m}"] = _mean(vals)
+
+        axis = row.get("avg_spin_axis")
+        if axis is not None:
+            row["avg_tilt"] = axis_to_clock(axis)
+
+        out.append(row)
+    return out
+
+
+#####################################################################
+# High-level composition
+#####################################################################
+
+
+def get_pitcher_arsenal(
+    pitcher_id: int | str,
+    start_date: str,
+    end_date: str,
+    level: str = "mlb",
+    **filters: Any,
+) -> list[dict[str, Any]]:
+    """Fetch a pitcher's pitch-level data and aggregate into an arsenal summary.
+
+    Convenience wrapper: :func:`statcast_search` + :func:`aggregate_pitcher_arsenal`.
+
+    Args:
+        pitcher_id: MLBAM pitcher ID.
+        start_date: ``"YYYY-MM-DD"`` (inclusive).
+        end_date: ``"YYYY-MM-DD"`` (inclusive).
+        level: ``"mlb"`` or ``"milb"``.
+        **filters: Additional raw Savant search params.
+
+    Returns:
+        ``list[dict]`` — one summary per (pitcher, pitch_type) group.
+    """
+    rows = statcast_search(
+        start_date,
+        end_date,
+        player_type="pitcher",
+        player_id=pitcher_id,
+        level=level,
+        **filters,
+    )
+    return aggregate_pitcher_arsenal(rows)

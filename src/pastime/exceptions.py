@@ -1,144 +1,80 @@
-from datetime import date
-from difflib import get_close_matches
-from typing import Iterable, Sequence, Type
+"""Exception hierarchy for pastime.
+
+All library errors derive from :class:`PastimeError`. Transport failures raise
+:class:`RequestError`; Savant content errors raise :class:`SavantError`; MLB
+Stats API errors raise :class:`MLBStatsError`; bad client input raises
+:class:`ValidationError`, which also subclasses :class:`ValueError` and emits a
+``difflib``-powered "did you mean?" suggestion.
+"""
+
+from __future__ import annotations
+
+import difflib
+from collections.abc import Sequence
+
+#####################################################################
+# Base
+#####################################################################
 
 
-#######################################################################################
-# FIELD EXCEPTIONS
+class PastimeError(Exception):
+    """Base class for all pastime errors."""
 
 
-class FieldNameError(ValueError):
-    def __init__(self, field_name: str, valid_values: Iterable[str] = None):
-        message = f"'{field_name}'"
-
-        if valid_values and (
-            close_matches := get_close_matches(field_name, valid_values)
-        ):
-            close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
-            message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
-
-        super().__init__(message)
+#####################################################################
+# Transport / source errors
+#####################################################################
 
 
-class FieldValueError(ValueError):
-    def __init__(self, value: str, field_name: str, valid_values: Iterable[str] = None):
-        message = f"'{value}' for field '{field_name}'"
-
-        if valid_values and (close_matches := get_close_matches(value, valid_values)):
-            close_matches_in_quotes = [f"'{cm}'" for cm in close_matches]
-            message += f"; did you mean {', '.join(close_matches_in_quotes)}?"
-
-        super().__init__(message)
+class RequestError(PastimeError):
+    """Transport failure (HTTP status, network, or timeout). Raised by http.py."""
 
 
-class FieldTypeError(TypeError):
+class SavantError(PastimeError):
+    """Baseball Savant content error (HTML instead of CSV, parse failure)."""
+
+
+class MLBStatsError(PastimeError):
+    """MLB Stats API error."""
+
+
+#####################################################################
+# Client input validation
+#####################################################################
+
+
+class ValidationError(PastimeError, ValueError):
+    """Bad client input.
+
+    When ``valid_values`` is provided, the message includes a "did you mean?"
+    suggestion computed with :func:`difflib.get_close_matches`.
+
+    Args:
+        value: The offending input value.
+        field_name: Name of the field/parameter the value was supplied for.
+        valid_values: Optional collection of accepted values, used to build a
+            suggestion and to list the allowed options.
+    """
+
     def __init__(
         self,
-        value: str | int | float | date | None,
+        value: object,
         field_name: str,
-        valid_types: Sequence[Type],
-    ):
-        message = (
-            f"{type(value)} for field '{field_name}'"
-            f"; expected {', '.join(str(vt) for vt in valid_types)}"
-        )
+        valid_values: Sequence[str] | None = None,
+    ) -> None:
+        self.value = value
+        self.field_name = field_name
+        self.valid_values = list(valid_values) if valid_values is not None else None
+
+        message = f"{value!r} is not a valid {field_name}."
+        if self.valid_values:
+            matches = difflib.get_close_matches(
+                str(value), self.valid_values, n=1, cutoff=0.6
+            )
+            if matches:
+                message += f" Did you mean {matches[0]!r}?"
+            else:
+                preview = ", ".join(self.valid_values[:10])
+                message += f" Valid values: {preview}"
 
         super().__init__(message)
-
-
-class TooManyValuesError(ValueError):
-    def __init__(
-        self,
-        values: Sequence[str | int | float | date | None],
-        field_name: str,
-        max_values: int,
-    ):
-        message = (
-            f"'{values}'"
-            f"; field '{field_name}' takes a maximum of {max_values} values"
-        )
-
-        super().__init__(message)
-
-
-class InvalidBoundError(ValueError):
-    def __init__(
-        self,
-        min_value: str | int | float,
-        max_value: str | int | float,
-        field_name: str = None,
-    ):
-        message = f"Lower bound '{min_value}' > upper bound '{max_value}'"
-
-        if field_name:
-            message += f" for field '{field_name}'"
-
-        super().__init__(message)
-
-
-class LessThanLowerBoundError(ValueError):
-    def __init__(
-        self,
-        value: str | int | float | date,
-        lower_bound: str | int | float | date,
-        field_name: str = None,
-    ):
-        message = f"'{value}' < lower bound '{lower_bound}'"
-
-        if field_name:
-            message += f" for field '{field_name}'"
-
-        super().__init__(message)
-
-
-class MoreThanUpperBoundError(ValueError):
-    def __init__(
-        self,
-        value: str | int | float | date,
-        upper_bound: str | int | float | date,
-        field_name: str = None,
-    ):
-        message = f"'{value}' < upper bound '{upper_bound}'"
-
-        if field_name:
-            message += f" for field '{field_name}'"
-
-        super().__init__(message)
-
-
-class InvalidSubgroupError(ValueError):
-    def __init__(
-        self,
-        group: str,
-        subgroup: str,
-        leaderboard: str,
-        valid_values: Sequence[str] | None,
-    ):
-        message = (
-            f"'{subgroup}'"
-            f" for group '{group}' in leaderboard '{leaderboard}'"
-            f"; subgroup for '{group}' must be "
-        )
-
-        if valid_values:
-            valid_values_with_quotes = [f"'{vv}'" for vv in valid_values]
-            message += f"in {', '.join(valid_values_with_quotes)}"
-
-        else:
-            message += f"{None}"
-
-        super().__init__(message)
-
-
-#######################################################################################
-# LOOKUP EXCEPTIONS
-
-
-class NameNotFoundError(ValueError):
-    def __init__(self, player_name: str):
-        super().__init__(f"'{player_name}'")
-
-
-class IdNotFoundError(ValueError):
-    def __init__(self, player_id: str | int):
-        super().__init__(f"'{player_id}'")

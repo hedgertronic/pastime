@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Sync dependencies
+        run: uv sync --python ${{ matrix.python-version }} --all-extras --dev
+
+      - name: Lint (ruff check)
+        run: uv run ruff check .
+
+      - name: Format check (ruff format)
+        run: uv run ruff format --check .
+
+      - name: Type-check (strict)
+        run: uv run mypy
+
+      - name: Test (offline) with coverage gate
+        run: uv run pytest --cov=pastime --cov-report=term-missing --cov-fail-under=100
+
+      - name: Build distribution
+        run: uv build
+
+      - name: Smoke installed wheel
+        run: |
+          python -m venv /tmp/pastime-smoke
+          /tmp/pastime-smoke/bin/python -m pip install dist/*.whl
+          /tmp/pastime-smoke/bin/python -c "import pastime; assert pastime.__version__ == '1.0.0'"
+          /tmp/pastime-smoke/bin/pastime --help
