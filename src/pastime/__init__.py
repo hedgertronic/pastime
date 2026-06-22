@@ -22,7 +22,7 @@ from pastime.frame import to_frame
 try:
     __version__ = version("pastime")
 except PackageNotFoundError:  # pragma: no cover - source tree fallback
-    __version__ = "1.0.0"
+    __version__ = "1.0.1"
 
 # Subpackages are the primary surface: `pastime.statcast.search_pitches(...)`,
 # `pastime.mlb.get_schedule(...)`, `pastime.lookup.lookup(...)`. The names below

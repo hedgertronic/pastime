@@ -25,7 +25,7 @@ from typing import Any, cast
 
 from pastime.exceptions import RequestError
 
-USER_AGENT = "Mozilla/5.0 (compatible; pastime/1.0.0)"
+USER_AGENT = "Mozilla/5.0 (compatible; pastime/1.0.1)"
 
 
 #####################################################################
