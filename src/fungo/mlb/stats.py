@@ -5,7 +5,7 @@ hydration string used on ``/api/v1/people``. The builder enforces the most
 important gotcha (``references/gotchas.md`` section A): ``sportId`` inside
 ``stats(...)`` is scalar-only — a comma or bracketed list silently returns
 empty results. Fan out one request per ``sportId`` instead (see
-:func:`pastime.mlb.people.get_player_stats_all_sports`).
+:func:`fungo.mlb.people.get_player_stats_all_sports`).
 """
 
 from __future__ import annotations
@@ -13,8 +13,8 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from pastime.exceptions import ValidationError
-from pastime.mlb.stats_api import _csv, _fmt_date, mlb_api
+from fungo.exceptions import ValidationError
+from fungo.mlb.stats_api import _csv, _fmt_date, mlb_api
 
 #####################################################################
 # Streak enumerations
@@ -72,7 +72,7 @@ def build_stats_hydrate(
     does **not** — a list (comma- or bracket-form) silently returns empty
     results because the hydrate grammar treats commas as argument delimiters.
     Fan out one request per ``sportId`` and merge client-side instead (see
-    :func:`pastime.mlb.people.get_player_stats_all_sports`).
+    :func:`fungo.mlb.people.get_player_stats_all_sports`).
 
     Args:
         group: Stat group(s) (e.g. ``hitting``, ``pitching``).

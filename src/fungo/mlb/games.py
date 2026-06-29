@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from pastime.mlb.stats_api import _csv, _fmt_date, mlb_api
+from fungo.mlb.stats_api import _csv, _fmt_date, mlb_api
 
 #####################################################################
 # Schedule

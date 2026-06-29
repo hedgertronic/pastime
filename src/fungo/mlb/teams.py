@@ -5,9 +5,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
-from pastime.exceptions import ValidationError
-from pastime.mlb.constants import ROSTER_TYPES, TEAM_IDS, TEAM_IDS_BY_ABBREV
-from pastime.mlb.stats_api import _csv, _fmt_date, mlb_api
+from fungo.exceptions import ValidationError
+from fungo.mlb.constants import ROSTER_TYPES, TEAM_IDS, TEAM_IDS_BY_ABBREV
+from fungo.mlb.stats_api import _csv, _fmt_date, mlb_api
 
 #####################################################################
 # Directory / single team
@@ -259,7 +259,7 @@ def get_roster(
 
     Args:
         team_id: MLB team id.
-        roster_type: One of :data:`pastime.mlb.constants.ROSTER_TYPES`.
+        roster_type: One of :data:`fungo.mlb.constants.ROSTER_TYPES`.
         season: Season year.
         date: As-of date (formatted to ``MM/DD/YYYY``).
         game_type: Game-type code.

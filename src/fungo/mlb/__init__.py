@@ -1,15 +1,15 @@
-"""``pastime.mlb`` — the MLB Stats API (statsapi.mlb.com) subpackage.
+"""``fungo.mlb`` — the MLB Stats API (statsapi.mlb.com) subpackage.
 
 A fully featured, pure pass-through wrapper: every endpoint function returns the
 raw JSON ``dict`` exactly as the API produced it. Transport (retry/backoff,
-4xx-vs-5xx handling) is delegated to :mod:`pastime.http`; MLB-specific input
-problems raise :class:`pastime.exceptions.MLBStatsError` /
-:class:`pastime.exceptions.ValidationError`.
+4xx-vs-5xx handling) is delegated to :mod:`fungo.http`; MLB-specific input
+problems raise :class:`fungo.exceptions.MLBStatsError` /
+:class:`fungo.exceptions.ValidationError`.
 """
 
 from __future__ import annotations
 
-from pastime.mlb.discovery import (
+from fungo.mlb.discovery import (
     get_baseball_stats,
     get_event_types,
     get_game_status,
@@ -32,7 +32,7 @@ from pastime.mlb.discovery import (
     get_stat_types,
     get_wind_direction,
 )
-from pastime.mlb.games import (
+from fungo.mlb.games import (
     get_boxscore,
     get_color_diffpatch,
     get_color_feed,
@@ -51,7 +51,7 @@ from pastime.mlb.games import (
     get_tied_games,
     get_win_probability,
 )
-from pastime.mlb.misc import (
+from fungo.mlb.misc import (
     get_attendance,
     get_award_recipients,
     get_broadcasts,
@@ -81,7 +81,7 @@ from pastime.mlb.misc import (
     get_venue,
     get_venues,
 )
-from pastime.mlb.people import (
+from fungo.mlb.people import (
     find_player,
     get_free_agents,
     get_people,
@@ -92,14 +92,14 @@ from pastime.mlb.people import (
     search_player_matches,
     search_players,
 )
-from pastime.mlb.stats import (
+from fungo.mlb.stats import (
     build_stats_hydrate,
     get_stat_leaders,
     get_stats,
     get_streaks,
 )
-from pastime.mlb.stats_api import mlb_api
-from pastime.mlb.teams import (
+from fungo.mlb.stats_api import mlb_api
+from fungo.mlb.teams import (
     get_roster,
     get_team,
     get_team_affiliates,

@@ -2,7 +2,7 @@
 
 Pure pass-through: every wrapper in this subpackage returns the raw JSON
 response (``dict``) exactly as the API produced it. Transport (retry, backoff,
-4xx-vs-5xx handling) lives in :mod:`pastime.http`; this module is only a thin
+4xx-vs-5xx handling) lives in :mod:`fungo.http`; this module is only a thin
 builder over it — base URL selection (v1 vs v1.1), param assembly, and date
 formatting.
 
@@ -21,8 +21,8 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, cast
 
-from pastime import http
-from pastime.exceptions import MLBStatsError
+from fungo import http
+from fungo.exceptions import MLBStatsError
 
 #####################################################################
 # Base URL
@@ -39,10 +39,10 @@ BASE_URL = "https://statsapi.mlb.com"
 def mlb_api(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     """Call the MLB Stats API and return the raw JSON payload.
 
-    Transport (retry/backoff, 4xx raising :class:`~pastime.exceptions.RequestError`)
-    is handled by :func:`pastime.http.request_json`. This call is intentionally
+    Transport (retry/backoff, 4xx raising :class:`~fungo.exceptions.RequestError`)
+    is handled by :func:`fungo.http.request_json`. This call is intentionally
     routed through the ``http`` module object so tests can monkeypatch
-    ``pastime.http.request_json``.
+    ``fungo.http.request_json``.
 
     Args:
         path: API path beginning with ``/api/v1`` or ``/api/v1.1``.

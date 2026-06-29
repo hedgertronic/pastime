@@ -3,14 +3,14 @@
 These meta-endpoints return the valid values for parameters used elsewhere in
 the API — stat types, game types, positions, situation codes, etc. They are
 useful for introspecting what the live API currently accepts (the local tables
-in :mod:`pastime.mlb.constants` are a frozen mirror).
+in :mod:`fungo.mlb.constants` are a frozen mirror).
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from pastime.mlb.stats_api import mlb_api
+from fungo.mlb.stats_api import mlb_api
 
 #####################################################################
 # Discovery endpoints

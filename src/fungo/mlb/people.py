@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from pastime import http
-from pastime.mlb.constants import HYDRATE_SPORT_IDS
-from pastime.mlb.stats_api import _csv, mlb_api
+from fungo import http
+from fungo.mlb.constants import HYDRATE_SPORT_IDS
+from fungo.mlb.stats_api import _csv, mlb_api
 
 #####################################################################
 # People
@@ -31,7 +31,7 @@ def get_people(
     Args:
         person_ids: A single MLBAM person id or a list of ids.
         hydrate: Optional hydration string (e.g. a ``stats(...)`` expression
-            built by :func:`pastime.mlb.stats.build_stats_hydrate`).
+            built by :func:`fungo.mlb.stats.build_stats_hydrate`).
         season: Optional season context for the hydrations.
         app_context: Optional ``appContext`` value.
         fields: Optional sparse-field selection string.
@@ -101,9 +101,7 @@ def search_players(
     return mlb_api("/api/v1/people/search", params)
 
 
-def search_player_matches(
-    name: str, sport_id: int | str = 1
-) -> list[dict[str, Any]]:
+def search_player_matches(name: str, sport_id: int | str = 1) -> list[dict[str, Any]]:
     """Return the raw ``people`` list from a name search.
 
     Args:
@@ -193,7 +191,7 @@ def get_player_stats_all_sports(
 
     Works around the gotcha that ``sportId`` inside ``stats(...)`` is
     scalar-only — a list silently returns empty results. Requests are issued
-    concurrently via :func:`pastime.http.map_concurrent` (bounded thread pool,
+    concurrently via :func:`fungo.http.map_concurrent` (bounded thread pool,
     results in input order).
 
     Args:
@@ -206,7 +204,7 @@ def get_player_stats_all_sports(
     Returns:
         ``{"person_id": person_id, "by_sport": {sport_id: payload, ...}}``.
     """
-    from pastime.mlb.stats import build_stats_hydrate
+    from fungo.mlb.stats import build_stats_hydrate
 
     def fetch(sid: int) -> dict[str, Any]:
         hydrate = build_stats_hydrate(
