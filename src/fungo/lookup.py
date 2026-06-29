@@ -4,9 +4,9 @@ Maps MLBAM <-> FanGraphs <-> Baseball-Reference <-> Retrosheet IDs. Source:
 https://github.com/chadwickbureau/register (split into 16 shards by the last hex
 char of ``key_person``).
 
-The ~6 MB register is fetched on demand via :func:`pastime.http.request_bytes`
+The ~6 MB register is fetched on demand via :func:`fungo.http.request_bytes`
 and cached under the stdlib user cache dir
-(``$XDG_CACHE_HOME``/``~/.cache`` -> ``pastime/chadwick_people.csv``). Call
+(``$XDG_CACHE_HOME``/``~/.cache`` -> ``fungo/chadwick_people.csv``). Call
 :func:`refresh` or pass ``force_refresh=True`` to update it.
 """
 
@@ -18,14 +18,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-from pastime import http
+from fungo import http
 
 CHADWICK_SHARD_URL = "https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-{}.csv"
 CHADWICK_SHARDS = "0123456789abcdef"
 
-CACHE_DIR = (
-    Path(os.environ.get("XDG_CACHE_HOME") or "~/.cache").expanduser() / "pastime"
-)
+CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME") or "~/.cache").expanduser() / "fungo"
 CACHE_FILE = CACHE_DIR / "chadwick_people.csv"
 
 # In-memory cache — populated on first lookup.

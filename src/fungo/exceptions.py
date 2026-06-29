@@ -1,6 +1,6 @@
-"""Exception hierarchy for pastime.
+"""Exception hierarchy for fungo.
 
-All library errors derive from :class:`PastimeError`. Transport failures raise
+All library errors derive from :class:`FungoError`. Transport failures raise
 :class:`RequestError`; Savant content errors raise :class:`SavantError`; MLB
 Stats API errors raise :class:`MLBStatsError`; bad client input raises
 :class:`ValidationError`, which also subclasses :class:`ValueError` and emits a
@@ -17,8 +17,8 @@ from collections.abc import Sequence
 #####################################################################
 
 
-class PastimeError(Exception):
-    """Base class for all pastime errors."""
+class FungoError(Exception):
+    """Base class for all fungo errors."""
 
 
 #####################################################################
@@ -26,15 +26,15 @@ class PastimeError(Exception):
 #####################################################################
 
 
-class RequestError(PastimeError):
+class RequestError(FungoError):
     """Transport failure (HTTP status, network, or timeout). Raised by http.py."""
 
 
-class SavantError(PastimeError):
+class SavantError(FungoError):
     """Baseball Savant content error (HTML instead of CSV, parse failure)."""
 
 
-class MLBStatsError(PastimeError):
+class MLBStatsError(FungoError):
     """MLB Stats API error."""
 
 
@@ -43,7 +43,7 @@ class MLBStatsError(PastimeError):
 #####################################################################
 
 
-class ValidationError(PastimeError, ValueError):
+class ValidationError(FungoError, ValueError):
     """Bad client input.
 
     When ``valid_values`` is provided, the message includes a "did you mean?"

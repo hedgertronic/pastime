@@ -1,9 +1,9 @@
-"""Shared HTTP transport and parsing for pastime — stdlib only.
+"""Shared HTTP transport and parsing for fungo — stdlib only.
 
 No ``requests``, ``rich``, or third-party deps. Provides:
 
 - :func:`request_bytes`: GET with exponential-backoff retry, raising
-  :class:`~pastime.exceptions.RequestError` on permanent failure.
+  :class:`~fungo.exceptions.RequestError` on permanent failure.
 - :func:`request_json`: GET + JSON decode.
 - :func:`parse_csv`: BOM-aware CSV -> ``list[dict]`` (no HTML detection; that is
   source-specific and lives in the Statcast layer).
@@ -23,9 +23,9 @@ import urllib.request
 from collections.abc import Callable, Sequence
 from typing import Any, cast
 
-from pastime.exceptions import RequestError
+from fungo.exceptions import RequestError
 
-USER_AGENT = "Mozilla/5.0 (compatible; pastime/1.0.1)"
+USER_AGENT = "Mozilla/5.0 (compatible; fungo/1.0.1)"
 
 
 #####################################################################
@@ -115,7 +115,10 @@ def request_json(
         json.JSONDecodeError: If the body is not valid JSON.
     """
     raw = request_bytes(url, params=params, **kw)
-    return cast("dict[str, Any] | list[Any]", json.loads(raw.decode("utf-8")))
+    try:
+        return cast("dict[str, Any] | list[Any]", json.loads(raw.decode("utf-8")))
+    except json.JSONDecodeError as exc:
+        raise RequestError(f"Invalid JSON response: {exc}") from exc
 
 
 #####################################################################
@@ -207,19 +210,24 @@ def map_concurrent[T, R](
         except ImportError:
             bar = None
 
+    executor = ThreadPoolExecutor(max_workers=max_workers)
     try:
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = []
-            for item in items:
-                futures.append(executor.submit(func, item))
-                if delay:
-                    time.sleep(delay)
+        futures = []
+        for i, item in enumerate(items):
+            futures.append(executor.submit(func, item))
+            if delay and i < len(items) - 1:
+                time.sleep(delay)
 
-            results: list[R] = []
-            for future in futures:
-                results.append(future.result())
-                if bar is not None and task_id is not None:
-                    bar.advance(task_id)
+        results: list[R] = []
+        for future in futures:
+            results.append(future.result())
+            if bar is not None and task_id is not None:
+                bar.advance(task_id)
+    except BaseException:
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+    else:
+        executor.shutdown(wait=True)
     finally:
         if bar is not None:
             bar.stop()

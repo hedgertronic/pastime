@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pastime.exceptions import ValidationError
+from fungo.exceptions import ValidationError
 
 #####################################################################
 # Pitch / outcome enums

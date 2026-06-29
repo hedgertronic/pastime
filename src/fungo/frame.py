@@ -1,16 +1,16 @@
-"""Optional DataFrame conversion for pastime row data.
+"""Optional DataFrame conversion for fungo row data.
 
 The core returns ``list[dict]`` with all-string CSV values. :func:`to_frame`
 converts those rows into a polars or pandas DataFrame, importing the chosen
 backend lazily so the core stays dependency-free. Install the matching extra
-(``pastime[polars]`` or ``pastime[pandas]``) to use it.
+(``fungo[polars]`` or ``fungo[pandas]``) to use it.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from pastime.exceptions import ValidationError
+from fungo.exceptions import ValidationError
 
 #####################################################################
 # DataFrame conversion
@@ -39,8 +39,7 @@ def to_frame(rows: list[dict[str, Any]], backend: str = "polars") -> Any:
             import polars as pl
         except ImportError as e:
             raise ImportError(
-                "polars is not installed. Install it with: "
-                "pip install 'pastime[polars]'"
+                "polars is not installed. Install it with: pip install 'fungo[polars]'"
             ) from e
         return pl.DataFrame(rows)
 
@@ -49,8 +48,7 @@ def to_frame(rows: list[dict[str, Any]], backend: str = "polars") -> Any:
             import pandas as pd
         except ImportError as e:
             raise ImportError(
-                "pandas is not installed. Install it with: "
-                "pip install 'pastime[pandas]'"
+                "pandas is not installed. Install it with: pip install 'fungo[pandas]'"
             ) from e
         return pd.DataFrame(rows)
 
