@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pastime"
-version = "1.0.1"
+name = "fungo"
+version = "1.0.0"
 description = "Python tools for baseball data from Statcast and the MLB Stats API."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,11 +28,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/hedgertronic/pastime"
-Repository = "https://github.com/hedgertronic/pastime"
+Homepage = "https://github.com/hedgertronic/fungo"
+Repository = "https://github.com/hedgertronic/fungo"
 
 [project.scripts]
-pastime = "pastime.cli:main"
+fungo = "fungo.cli:main"
 
 [project.optional-dependencies]
 polars = ["polars"]
@@ -56,7 +56,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pastime"]
+packages = ["src/fungo"]
 
 [tool.ruff]
 line-length = 88

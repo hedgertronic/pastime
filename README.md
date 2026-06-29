@@ -1,8 +1,8 @@
-# Pastime for Python <!-- omit in toc -->
+# Fungo for Python <!-- omit in toc -->
 
 Python tools for baseball data from [Statcast](https://baseballsavant.mlb.com) and the [MLB Stats API](https://statsapi.mlb.com).
 
-Pastime is a small data-access library for researchers, analysts, and developers who want raw baseball data without committing to a DataFrame stack. The core package is stdlib-only. Statcast CSV endpoints return `list[dict]` with string values, MLB Stats API endpoints return raw JSON `dict` payloads, and optional extras add DataFrame conversion or progress bars when you want them.
+Fungo is a small data-access library for researchers, analysts, and developers who want raw baseball data without committing to a DataFrame stack. The core package is stdlib-only. Statcast CSV endpoints return `list[dict]` with string values, MLB Stats API endpoints return raw JSON `dict` payloads, and optional extras add DataFrame conversion or progress bars when you want them.
 
 ## Contents <!-- omit in toc -->
 
@@ -26,29 +26,28 @@ Pastime is a small data-access library for researchers, analysts, and developers
 - [Player ID Lookup](#player-id-lookup)
 - [DataFrames](#dataframes)
 - [Command Line](#command-line)
-- [v1 Migration Notes](#v1-migration-notes)
 
 ## Installation
 
 Install the core package:
 
 ```bash
-pip install pastime
+pip install fungo
 ```
 
 Or with [`uv`](https://docs.astral.sh/uv/):
 
 ```bash
-uv add pastime
+uv add fungo
 ```
 
 Install optional extras when you need DataFrames or progress bars:
 
 ```bash
-uv add "pastime[polars]"     # to_frame(rows, backend="polars")
-uv add "pastime[pandas]"      # to_frame(rows, backend="pandas")
-uv add "pastime[progress]"    # rich progress bars on long pulls
-uv add "pastime[all]"         # all runtime extras
+uv add "fungo[polars]"     # to_frame(rows, backend="polars")
+uv add "fungo[pandas]"      # to_frame(rows, backend="pandas")
+uv add "fungo[progress]"    # rich progress bars on long pulls
+uv add "fungo[all]"         # all runtime extras
 ```
 
 For local development:
@@ -61,10 +60,10 @@ uv run pytest
 
 ## Getting Started
 
-Pastime keeps each source under its own namespace:
+Fungo keeps each source under its own namespace:
 
 ```python
-from pastime import mlb, statcast
+from fungo import mlb, statcast
 
 pitches = statcast.search_pitches(
     start_date="2024-03-28",
@@ -85,14 +84,14 @@ The library returns raw data by design:
 
 ## Statcast
 
-The `pastime.statcast` namespace wraps Baseball Savant search, leaderboard, and derived physics workflows.
+The `fungo.statcast` namespace wraps Baseball Savant search, leaderboard, and derived physics workflows.
 
 ### Pitch-Level Search
 
 `search_pitches(...)` fetches pitch-level Baseball Savant CSV data. Ranges longer than five days are split into one-day requests and fetched concurrently to avoid Savant's row cap. `statcast_search(...)` remains available as a compatibility alias.
 
 ```python
-from pastime.statcast import search_pitches
+from fungo.statcast import search_pitches
 
 # Every pitch Gerrit Cole (MLBAM 543037) threw in the first week of 2024.
 pitches = search_pitches(
@@ -109,7 +108,7 @@ Important options:
 
 - `player_type`: `"pitcher"` or `"batter"`.
 - `player_id`: MLBAM player ID.
-- `team`: team abbreviation/name, resolved through Pastime constants.
+- `team`: team abbreviation/name, resolved through Fungo constants.
 - `home_road`: home/away filter for team searches.
 - `level`: `"mlb"` or `"milb"`.
 - arbitrary Savant filters such as `hfPT`, `hfBBT`, `hfGT`, or `game_date_gt`.
@@ -136,7 +135,7 @@ Convenience helpers build common Statcast search filters:
 - `aggregate_pitcher_arsenal(rows)`: aggregate already-fetched pitch rows.
 
 ```python
-from pastime.statcast import get_pitcher_arsenal, search_game
+from fungo.statcast import get_pitcher_arsenal, search_game
 
 game = search_game(game_pk=747220)
 arsenal = get_pitcher_arsenal(543037, "2024-04-01", "2024-04-30")
@@ -144,7 +143,7 @@ arsenal = get_pitcher_arsenal(543037, "2024-04-01", "2024-04-30")
 
 ### Leaderboards
 
-Pastime includes a registry of Baseball Savant leaderboards with typed wrappers plus a generic fetcher.
+Fungo includes a registry of Baseball Savant leaderboards with typed wrappers plus a generic fetcher.
 
 Discovery:
 
@@ -162,7 +161,7 @@ Common typed wrappers include:
 - Other: `get_year_to_year`, `get_abs_challenges`, `get_timer_infractions`, `get_swing_take`.
 
 ```python
-from pastime.statcast import (
+from fungo.statcast import (
     get_expected_statistics,
     get_leaderboard,
     get_percentile_rankings,
@@ -185,7 +184,7 @@ The Hawk-Eye bat-tracking boards use newer Baseball Savant season parameters. Th
 - `get_swing_timing_miss_distance`
 
 ```python
-from pastime.statcast import get_bat_tracking, get_swing_timing_miss_distance
+from fungo.statcast import get_bat_tracking, get_swing_timing_miss_distance
 
 # seasonStart/seasonEnd range: one aggregated row per player over the span.
 combined = get_bat_tracking(season=(2023, 2024), type="batter", min_swings=100)
@@ -196,20 +195,18 @@ per_year = get_swing_timing_miss_distance(season=[2023, 2024], type="batter")
 
 ### HTML-Backed Leaderboards
 
-Some Baseball Savant pages do not expose CSV. Pastime parses their inline JSON:
+Some Baseball Savant pages do not expose CSV. Fungo parses their inline JSON:
 
 - `get_park_factors`
 - `get_hot_stove`
 - `get_rolling_windows`
-
-`get_top_performers` currently raises `SavantError`: Savant serves that page with an empty inline `var data = {};` payload and renders the visible cards directly in HTML. Failing loudly is intentional so callers do not mistake an empty response for valid data.
 
 ### Derived Spin Physics
 
 `add_spin_columns(...)` adds Alan Nathan-style derived spin physics columns to Statcast pitch rows. It is opt-in; search does not mutate or enrich rows automatically.
 
 ```python
-from pastime.statcast import add_spin_columns, axis_to_clock
+from fungo.statcast import add_spin_columns, axis_to_clock
 
 enriched = add_spin_columns(pitches)
 clock = axis_to_clock(225)
@@ -219,12 +216,12 @@ Added columns include induced/Magnus movement estimates, transverse acceleration
 
 ## MLB Stats API
 
-The `pastime.mlb` namespace is a pass-through wrapper for `statsapi.mlb.com`. Every function returns raw JSON and accepts the most common endpoint parameters. For unsupported or newly discovered routes, use `mlb_api(path, params)`.
+The `fungo.mlb` namespace is a pass-through wrapper for `statsapi.mlb.com`. Every function returns raw JSON and accepts the most common endpoint parameters. For unsupported or newly discovered routes, use `mlb_api(path, params)`.
 
 ### Low-Level API
 
 ```python
-from pastime import mlb
+from fungo import mlb
 
 raw = mlb.mlb_api("/api/v1/teams", {"sportId": 1})
 ```
@@ -325,16 +322,16 @@ venues = mlb.get_venues()
 
 ## Player ID Lookup
 
-`pastime.lookup` provides player ID cross-reference helpers backed by the Chadwick Bureau register. The register is fetched on demand and cached under your user cache directory (`$XDG_CACHE_HOME` or `~/.cache`, then `pastime/chadwick_people.csv`).
+`fungo.lookup` provides player ID cross-reference helpers backed by the Chadwick Bureau register. The register is fetched on demand and cached under your user cache directory (`$XDG_CACHE_HOME` or `~/.cache`, then `fungo/chadwick_people.csv`).
 
 ```python
-from pastime import lookup
+from fungo import lookup
 
 lookup.lookup(name="Trout")
 lookup.mlbam_to_fangraphs(545361)
 lookup.mlbam_to_bbref(545361)
 lookup.fangraphs_to_mlbam(15640)
-lookup.bbref_to_mlbam("troum001")
+lookup.bbref_to_mlbam("troutmi01")
 lookup.refresh()
 ```
 
@@ -343,8 +340,8 @@ lookup.refresh()
 The core returns raw rows. Convert explicitly with `to_frame`, which imports the backend lazily.
 
 ```python
-from pastime import to_frame
-from pastime.statcast import get_expected_statistics
+from fungo import to_frame
+from fungo.statcast import get_expected_statistics
 
 rows = get_expected_statistics(year=2024, type="batter", min_pa=300)
 df = to_frame(rows, backend="polars")   # or backend="pandas"
@@ -352,35 +349,27 @@ df = to_frame(rows, backend="polars")   # or backend="pandas"
 
 ## Command Line
 
-The `pastime` console script exposes four subcommands. `--format` defaults to `csv` for `lookup`, `search`, and `leaderboard`, and `json` for `mlb`. `-o/--output` writes to a file instead of stdout.
+The `fungo` console script exposes four subcommands. `--format` defaults to `csv` for `lookup`, `search`, and `leaderboard`, and `json` for `mlb`. `-o/--output` writes to a file instead of stdout.
 
 ```bash
 # Player ID lookup
-pastime lookup --name "Gerrit Cole"
+fungo lookup --name "Gerrit Cole"
 
 # Pitch-level Statcast search
-pastime search --start 2024-04-01 --end 2024-04-07 --player-id 543037 --hfPT=FF,SL
+fungo search --start 2024-04-01 --end 2024-04-07 --player-id 543037 --hfPT=FF,SL
 
 # Leaderboards
-pastime leaderboard --list --category pitching
-pastime leaderboard catcher-framing --season 2024
-pastime leaderboard bat-tracking/swing-timing-miss-distance --season 2023,2024
+fungo leaderboard --list --category pitching
+fungo leaderboard catcher-framing --season 2024
+fungo leaderboard bat-tracking/swing-timing-miss-distance --season 2023,2024
 
 # MLB Stats API
-pastime mlb get_schedule --date=2024-07-16
-pastime mlb --list
+fungo mlb get_schedule --date=2024-07-16
+fungo mlb --list
 ```
 
 `search`, `leaderboard`, and `mlb` accept arbitrary `--field=value` passthrough arguments. Only `search` pipe-joins comma-separated values for Baseball Savant filters.
 
-## v1 Migration Notes
+## Changelog
 
-Pastime 1.0 intentionally narrows the public surface into three stable package areas:
-
-- `pastime.statcast` for Baseball Savant search, leaderboards, and derived physics.
-- `pastime.mlb` for MLB Stats API pass-through wrappers.
-- `pastime.lookup` for player ID cross-reference helpers.
-
-Older pre-1.0 modules such as `pastime.download`, `pastime.field`, `pastime.query`, `pastime.statcast.query`, `pastime.statcast.base`, `pastime.statcast.analysis`, and `pastime.statcast.leaderboard` were removed. Use `pastime.statcast.search`, `pastime.statcast.leaderboards`, `pastime.statcast.physics`, and `pastime.mlb` instead.
-
-See [MIGRATION.md](MIGRATION.md) and [CHANGELOG.md](CHANGELOG.md) for the full release notes.
+See [CHANGELOG.md](CHANGELOG.md) for release notes.

@@ -39,14 +39,14 @@ jobs:
         run: uv run mypy
 
       - name: Test (offline) with coverage gate
-        run: uv run pytest --cov=pastime --cov-report=term-missing --cov-fail-under=100
+        run: uv run pytest --cov=fungo --cov-report=term-missing --cov-fail-under=100
 
       - name: Build distribution
         run: uv build
 
       - name: Smoke installed wheel
         run: |
-          python -m venv /tmp/pastime-smoke
-          /tmp/pastime-smoke/bin/python -m pip install dist/*.whl
-          /tmp/pastime-smoke/bin/python -c "import pastime; assert pastime.__version__ == '1.0.0'"
-          /tmp/pastime-smoke/bin/pastime --help
+          python -m venv /tmp/fungo-smoke
+          /tmp/fungo-smoke/bin/python -m pip install dist/*.whl
+          /tmp/fungo-smoke/bin/python -c "import fungo; assert fungo.__version__ == '1.0.0'"
+          /tmp/fungo-smoke/bin/fungo --help
