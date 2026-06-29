@@ -1,4 +1,4 @@
-"""Tests for pastime.http: request_bytes, parse_csv, map_concurrent (offline)."""
+"""Tests for fungo.http: request_bytes, parse_csv, map_concurrent (offline)."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ import urllib.request
 
 import pytest
 
-from pastime import http
-from pastime.exceptions import RequestError
-from pastime.http import map_concurrent, parse_csv, request_bytes
+from fungo import http
+from fungo.exceptions import RequestError
+from fungo.http import map_concurrent, parse_csv, request_bytes
 
 #####################################################################
 # request_bytes — param encoding
@@ -227,6 +227,12 @@ def test_request_json_decodes_success(monkeypatch):
     }
 
 
+def test_request_json_invalid_json_raises_request_error(monkeypatch):
+    monkeypatch.setattr(http, "request_bytes", lambda *a, **kw: b"not valid json {")
+    with pytest.raises(RequestError, match="Invalid JSON response"):
+        http.request_json("https://example.com/json")
+
+
 #####################################################################
 # map_concurrent
 #####################################################################
@@ -264,7 +270,7 @@ def test_map_concurrent_delay_sleeps_between_submissions(monkeypatch):
     result = map_concurrent(lambda x: x, [1, 2, 3], max_workers=1, delay=0.25)
 
     assert result == [1, 2, 3]
-    assert sleeps == [0.25, 0.25, 0.25]
+    assert sleeps == [0.25, 0.25]
 
 
 def test_map_concurrent_progress_false_is_silent(capsys):
@@ -288,3 +294,13 @@ def test_map_concurrent_progress_true_works_when_rich_present():
     # in-order results when the real progress bar is exercised.
     result = map_concurrent(lambda x: x + 1, [1, 2, 3], progress=True)
     assert result == [2, 3, 4]
+
+
+def test_map_concurrent_worker_exception_propagates():
+    # A worker that raises must propagate through the BaseException handler,
+    # which shuts down the executor and re-raises. Lines 226-228 of http.py.
+    def boom(x: int) -> int:
+        raise RuntimeError("worker failed")
+
+    with pytest.raises(RuntimeError, match="worker failed"):
+        map_concurrent(boom, [1, 2, 3], max_workers=2)

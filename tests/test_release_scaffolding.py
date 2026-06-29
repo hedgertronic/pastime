@@ -10,10 +10,10 @@ import inspect
 import tomllib
 from pathlib import Path
 
-import pastime
-import pastime.mlb as mlb
-import pastime.statcast as statcast
-from pastime.statcast import leaderboards as lb
+import fungo
+import fungo.mlb as mlb
+import fungo.statcast as statcast
+from fungo.statcast import leaderboards as lb
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,7 +23,7 @@ def _pyproject() -> dict:
 
 
 def test_package_version_matches_pyproject():
-    assert pastime.__version__ == _pyproject()["project"]["version"]
+    assert fungo.__version__ == _pyproject()["project"]["version"]
 
 
 def test_all_extra_is_runtime_only():
@@ -58,8 +58,8 @@ def test_project_classifiers_match_v1_package_shape():
 
 
 def test_top_level_exports_exist():
-    for name in pastime.__all__:
-        assert hasattr(pastime, name), name
+    for name in fungo.__all__:
+        assert hasattr(fungo, name), name
 
 
 def test_statcast_exports_exist():
@@ -76,7 +76,6 @@ def test_leaderboard_registry_has_wrappers_for_html_boards():
     html_wrappers = {
         "statcast-park-factors": lb.get_park_factors,
         "hot-stove": lb.get_hot_stove,
-        "top-performers": lb.get_top_performers,
         "rolling": lb.get_rolling_windows,
     }
     html_slugs = {
@@ -93,20 +92,6 @@ def test_public_leaderboard_wrappers_are_exported_from_statcast():
         if name.startswith("get_") and name not in {"get_leaderboard"}:
             assert name in statcast.__all__, name
             assert getattr(statcast, name) is func
-
-
-def test_migration_notes_document_removed_modules():
-    text = (ROOT / "MIGRATION.md").read_text(encoding="utf-8")
-    for module in [
-        "pastime.download",
-        "pastime.field",
-        "pastime.query",
-        "pastime.statcast.analysis",
-        "pastime.statcast.base",
-        "pastime.statcast.leaderboard",
-        "pastime.statcast.query",
-    ]:
-        assert module in text
 
 
 def test_changelog_documents_v1_release():

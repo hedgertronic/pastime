@@ -1,17 +1,17 @@
-"""Offline tests for pastime.statcast.leaderboards.
+"""Offline tests for fungo.statcast.leaderboards.
 
 Focus: the load-bearing ``year_format`` param emission across ALL FOUR formats,
 the percentile ``999999`` drop, and per-board ``player_id`` handling. Transport
-is mocked at ``pastime.http.request_bytes``.
+is mocked at ``fungo.http.request_bytes``.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from pastime import http
-from pastime.exceptions import SavantError, ValidationError
-from pastime.statcast import leaderboards as lb
+from fungo import http
+from fungo.exceptions import SavantError, ValidationError
+from fungo.statcast import leaderboards as lb
 
 
 def _capture(monkeypatch, body=b"id,name\n1,x\n"):
@@ -91,6 +91,11 @@ def test_emit_year_camelcase_tuple_range_min_max():
     assert "year" not in query
 
 
+def test_emit_year_camelcase_empty_sequence_raises():
+    with pytest.raises(ValidationError):
+        lb._emit_year({}, "bat-tracking", [])
+
+
 def test_emit_year_season_array_scalar_wraps_in_list():
     query: dict = {}
     lb._emit_year(query, "bat-tracking/swing-timing-miss-distance", 2024)
@@ -164,7 +169,6 @@ def test_get_swing_timing_miss_distance_uses_min_and_season_array(monkeypatch):
 
 def test_breaks_endpoint_omits_player_id_from_url(monkeypatch):
     # active-spin "breaks" on player_id — must not appear in the query
-    _capture(monkeypatch, body=b"pitcher_id,active_spin\n543037,0.9\n")
     cap = _capture(monkeypatch, body=b"pitcher_id,active_spin\n543037,0.9\n")
     lb.fetch_leaderboard("active-spin", year="2024_spin-based", player_id=543037)
     assert "player_id" not in cap["params"]
@@ -203,12 +207,12 @@ def test_get_leaderboard_unknown_slug_raises():
 
 
 def test_get_leaderboard_html_only_raises():
-    with pytest.raises(ValueError, match="no CSV endpoint"):
+    with pytest.raises(ValidationError, match="not a valid leaderboard"):
         lb.get_leaderboard("statcast-park-factors", year=2024)
 
 
 def test_get_leaderboard_special_int_year_raises():
-    with pytest.raises(ValueError, match="composite year string"):
+    with pytest.raises(ValidationError, match="not a valid year"):
         lb.get_leaderboard("active-spin", year=2024)
 
 
@@ -225,7 +229,7 @@ def test_cast_numeric_auto_detects_columns_and_preserves_input():
         {"name": "Cole", "barrels": "not numeric", "rate": None, "blank": "x"},
     ]
 
-    out = lb.cast_numeric(rows)
+    out = lb._cast_numeric(rows)
 
     assert out == [
         {"name": "Judge", "barrels": 28.0, "rate": 12.5, "blank": None},
@@ -235,8 +239,8 @@ def test_cast_numeric_auto_detects_columns_and_preserves_input():
 
 
 def test_cast_numeric_empty_and_selected_columns():
-    assert lb.cast_numeric([]) == []
-    out = lb.cast_numeric([{"a": "1", "b": "2"}], cols=["b", "missing"])
+    assert lb._cast_numeric([]) == []
+    out = lb._cast_numeric([{"a": "1", "b": "2"}], cols=["b", "missing"])
     assert out == [{"a": "1", "b": 2.0}]
 
 
@@ -254,14 +258,14 @@ def test_all_four_year_formats_present_in_registry():
 
 
 #####################################################################
-# fetch_html_json
+# _fetch_html_json
 #####################################################################
 
 
 def test_fetch_html_json_extracts_array(monkeypatch):
     html = b'<html><script>var data = [{"venue":"Coors","pf":112}];</script></html>'
     monkeypatch.setattr(http, "request_bytes", lambda *a, **k: html)
-    out = lb.fetch_html_json("https://x", var_name="data")
+    out = lb._fetch_html_json("https://x", var_name="data")
     assert out == [{"venue": "Coors", "pf": 112}]
 
 
@@ -273,7 +277,7 @@ def test_fetch_html_json_extracts_object_from_const(monkeypatch):
         b"};</script>"
     )
     monkeypatch.setattr(http, "request_bytes", lambda *a, **k: html)
-    out = lb.fetch_html_json("https://x", var_name="rolling")
+    out = lb._fetch_html_json("https://x", var_name="rolling")
     assert out == {
         "windows": [{"label": "7", "rows": [{"name": "A"}]}],
         "meta": {"source": "fixture"},
@@ -289,7 +293,7 @@ def test_fetch_html_json_brace_match_ignores_brackets_inside_strings(monkeypatch
         b"}];</script>"
     )
     monkeypatch.setattr(http, "request_bytes", lambda *a, **k: html)
-    out = lb.fetch_html_json("https://x", var_name="data")
+    out = lb._fetch_html_json("https://x", var_name="data")
     assert out == [
         {
             "name": "A ] fake close",
@@ -302,13 +306,13 @@ def test_fetch_html_json_brace_match_ignores_brackets_inside_strings(monkeypatch
 def test_fetch_html_json_missing_var_raises(monkeypatch):
     monkeypatch.setattr(http, "request_bytes", lambda *a, **k: b"<html></html>")
     with pytest.raises(SavantError, match="not found"):
-        lb.fetch_html_json("https://x", var_name="data")
+        lb._fetch_html_json("https://x", var_name="data")
 
 
 def test_fetch_html_json_invalid_json_raises(monkeypatch):
     monkeypatch.setattr(http, "request_bytes", lambda *a, **k: b"var data = ['x'];")
     with pytest.raises(SavantError, match="Failed to parse JSON"):
-        lb.fetch_html_json("https://x", var_name="data")
+        lb._fetch_html_json("https://x", var_name="data")
 
 
 def test_brace_match_unterminated_raises():
@@ -813,19 +817,6 @@ def test_typed_csv_wrappers_call_expected_leaderboard(
             {"year": "2024"},
         ),
         (
-            "get_top_performers",
-            (2024,),
-            {"type": "pitcher", "metric": "whiff_percent", "days": 14},
-            "/leaderboard/top-performers",
-            "data",
-            {
-                "year": "2024",
-                "type": "pitcher",
-                "metric": "whiff_percent",
-                "days": "14",
-            },
-        ),
-        (
             "get_rolling_windows",
             (2024,),
             {"metric": "xwoba", "days": 30, "empty": None},
@@ -850,7 +841,7 @@ def test_html_backed_wrappers_call_expected_scraper(
         )
         return [{"ok": True}]
 
-    monkeypatch.setattr(lb, "fetch_html_json", fake_fetch_html_json)
+    monkeypatch.setattr(lb, "_fetch_html_json", fake_fetch_html_json)
     assert getattr(lb, func_name)(*args, **kwargs) == [{"ok": True}]
     assert calls == [
         {
@@ -859,9 +850,3 @@ def test_html_backed_wrappers_call_expected_scraper(
             "params": expected_params,
         }
     ]
-
-
-def test_top_performers_empty_json_raises(monkeypatch):
-    monkeypatch.setattr(lb, "fetch_html_json", lambda *a, **k: {})
-    with pytest.raises(SavantError, match="JSON payload is empty"):
-        lb.get_top_performers(2024)

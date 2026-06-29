@@ -1,7 +1,7 @@
 """Tests for the Chadwick lookup.
 
-The offline test mocks pastime.http.request_bytes and redirects the cache to a
-tmp dir so the real ~/.cache/pastime register is never touched. A live test that
+The offline test mocks fungo.http.request_bytes and redirects the cache to a
+tmp dir so the real ~/.cache/fungo register is never touched. A live test that
 hits GitHub is behind @pytest.mark.live.
 """
 
@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from pastime import http
-from pastime import lookup as lookup_mod
+from fungo import http
+from fungo import lookup as lookup_mod
 
 _HEADER = (
     "key_mlbam,key_fangraphs,key_bbref,key_bbref_minors,key_retro,"
@@ -42,7 +42,7 @@ def mock_register(monkeypatch, tmp_path):
     def fake_request_bytes(url, params=None, **kw):
         return next(shard_bodies)
 
-    # Per the build spec, mock transport at pastime.http.request_bytes; lookup
+    # Per the build spec, mock transport at fungo.http.request_bytes; lookup
     # calls it via the http module so the patch takes effect.
     monkeypatch.setattr(http, "request_bytes", fake_request_bytes)
     return cache_file

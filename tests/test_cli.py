@@ -1,6 +1,6 @@
-"""Offline tests for the ``pastime`` CLI.
+"""Offline tests for the ``fungo`` CLI.
 
-Underlying library functions are monkeypatched in the ``pastime.cli`` namespace,
+Underlying library functions are monkeypatched in the ``fungo.cli`` namespace,
 so nothing here touches the network. Each test exercises rendering, format
 defaults, passthrough parsing, or dispatch — never live data.
 """
@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from pastime import cli
+from fungo import cli
 
 #####################################################################
 # Fixtures / helpers
@@ -213,10 +213,10 @@ def test_mlb_missing_function_errors():
         cli.main(["mlb"])
 
 
-def test_pastime_error_reported_cleanly(monkeypatch, capsys):
-    # A PastimeError from the library is caught at the main() boundary: clean
+def test_fungo_error_reported_cleanly(monkeypatch, capsys):
+    # A FungoError from the library is caught at the main() boundary: clean
     # one-line `error:` on stderr + exit 1, no traceback.
-    from pastime.exceptions import ValidationError
+    from fungo.exceptions import ValidationError
 
     def boom(*a: Any, **k: Any) -> list[dict]:
         raise ValidationError("nope", "slug")
@@ -229,7 +229,7 @@ def test_pastime_error_reported_cleanly(monkeypatch, capsys):
 
 
 def test_unexpected_exception_propagates(monkeypatch):
-    # A non-PastimeError (a real bug) is NOT swallowed — it surfaces a traceback.
+    # A non-FungoError (a real bug) is NOT swallowed — it surfaces a traceback.
     def boom(*a: Any, **k: Any) -> list[dict]:
         raise KeyError("bug")
 

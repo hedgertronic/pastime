@@ -10,8 +10,8 @@ import builtins
 
 import pytest
 
-from pastime.exceptions import ValidationError
-from pastime.frame import to_frame
+from fungo.exceptions import ValidationError
+from fungo.frame import to_frame
 
 _ROWS = [
     {"key_mlbam": "545361", "name_last": "Trout"},
@@ -80,7 +80,7 @@ def test_to_frame_missing_polars_raises_actionable_import_error(monkeypatch):
         return real_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    with pytest.raises(ImportError, match=r"pastime\[polars\]"):
+    with pytest.raises(ImportError, match=r"fungo\[polars\]"):
         to_frame(_ROWS, backend="polars")
 
 
@@ -93,5 +93,5 @@ def test_to_frame_missing_pandas_raises_actionable_import_error(monkeypatch):
         return real_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    with pytest.raises(ImportError, match=r"pastime\[pandas\]"):
+    with pytest.raises(ImportError, match=r"fungo\[pandas\]"):
         to_frame(_ROWS, backend="pandas")

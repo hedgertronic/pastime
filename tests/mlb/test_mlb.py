@@ -1,6 +1,6 @@
-"""Offline tests for the ``pastime.mlb`` subpackage.
+"""Offline tests for the ``fungo.mlb`` subpackage.
 
-Transport is mocked by monkeypatching ``pastime.http.request_json`` (the call
+Transport is mocked by monkeypatching ``fungo.http.request_json`` (the call
 site in ``stats_api.mlb_api`` does attribute lookup on the ``http`` module, so
 this interception works). A single ``@pytest.mark.live`` smoke test (deselected
 by default) hits the real API.
@@ -13,11 +13,11 @@ from typing import Any
 
 import pytest
 
-from pastime import http
-from pastime.exceptions import MLBStatsError, ValidationError
-from pastime.mlb import discovery, games, misc, people, stats, teams
-from pastime.mlb.constants import HYDRATE_SPORT_IDS
-from pastime.mlb.stats_api import _fmt_date, mlb_api
+from fungo import http
+from fungo.exceptions import MLBStatsError, ValidationError
+from fungo.mlb import discovery, games, misc, people, stats, teams
+from fungo.mlb.constants import HYDRATE_SPORT_IDS
+from fungo.mlb.stats_api import _fmt_date, mlb_api
 
 
 @pytest.fixture

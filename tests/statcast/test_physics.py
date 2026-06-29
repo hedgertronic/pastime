@@ -1,9 +1,9 @@
-"""Offline tests for pastime.statcast.physics (pure math, no network)."""
+"""Offline tests for fungo.statcast.physics (pure math, no network)."""
 
 from __future__ import annotations
 
-from pastime.statcast import physics
-from pastime.statcast.physics import DERIVED_COLUMNS, add_spin_columns, axis_to_clock
+from fungo.statcast import physics
+from fungo.statcast.physics import DERIVED_COLUMNS, add_spin_columns, axis_to_clock
 
 # Realistic 4-seam fastball release vectors (Statcast-scale ft/s & ft/s^2).
 # Verified to yield a valid physical solution (compute_row returns non-None).

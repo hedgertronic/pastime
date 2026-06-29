@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pastime.exceptions import (
+from fungo.exceptions import (
+    FungoError,
     MLBStatsError,
-    PastimeError,
     RequestError,
     SavantError,
     ValidationError,
@@ -12,10 +12,10 @@ from pastime.exceptions import (
 
 
 def test_hierarchy():
-    assert issubclass(RequestError, PastimeError)
-    assert issubclass(SavantError, PastimeError)
-    assert issubclass(MLBStatsError, PastimeError)
-    assert issubclass(ValidationError, PastimeError)
+    assert issubclass(RequestError, FungoError)
+    assert issubclass(SavantError, FungoError)
+    assert issubclass(MLBStatsError, FungoError)
+    assert issubclass(ValidationError, FungoError)
     assert issubclass(ValidationError, ValueError)
 
 

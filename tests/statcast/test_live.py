@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from pastime.statcast import leaderboards as lb
+from fungo.statcast import leaderboards as lb
 
 
 @pytest.mark.live

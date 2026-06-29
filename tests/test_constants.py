@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from pastime.constants import (
+from fungo.constants import (
     TEAM_CODES,
     TEAMS,
     resolve_hand,
     resolve_pitch_type,
     resolve_team,
 )
-from pastime.exceptions import ValidationError
+from fungo.exceptions import ValidationError
 
 
 def test_team_codes_count():

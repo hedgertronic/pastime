@@ -1,6 +1,6 @@
-"""Offline tests for pastime.statcast.search.
+"""Offline tests for fungo.statcast.search.
 
-Transport is mocked by monkeypatching ``pastime.http.request_bytes`` (the choke
+Transport is mocked by monkeypatching ``fungo.http.request_bytes`` (the choke
 point both search and leaderboards route through).
 """
 
@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from pastime import http
-from pastime.exceptions import SavantError
-from pastime.statcast import search
+from fungo import http
+from fungo.exceptions import SavantError, ValidationError
+from fungo.statcast import search
 
 CSV_ONE_ROW = b"pitch_type,player_name\nFF,Cole\n"
 
@@ -28,7 +28,7 @@ def _record(monkeypatch):
 
 
 #####################################################################
-# fetch_csv: HTML detection
+# _fetch_csv: HTML detection
 #####################################################################
 
 
@@ -37,12 +37,12 @@ def test_fetch_csv_html_raises_savant_error(monkeypatch):
         http, "request_bytes", lambda *a, **k: b"<!DOCTYPE html><html>nope</html>"
     )
     with pytest.raises(SavantError, match="HTML instead of CSV"):
-        search.fetch_csv("https://x")
+        search._fetch_csv("https://x")
 
 
 def test_fetch_csv_parses_csv(monkeypatch):
     monkeypatch.setattr(http, "request_bytes", lambda *a, **k: CSV_ONE_ROW)
-    rows = search.fetch_csv("https://x")
+    rows = search._fetch_csv("https://x")
     assert rows == [{"pitch_type": "FF", "player_name": "Cole"}]
 
 
@@ -96,9 +96,38 @@ def test_search_start_after_end_raises(monkeypatch):
         search.search_pitches("2024-06-10", "2024-06-01")
 
 
+def test_search_bad_date_format_raises_validation_error(monkeypatch):
+    _record(monkeypatch)
+    with pytest.raises(ValidationError):
+        search.search_pitches("06/01/2024", "2024-06-06")
+
+
+def test_search_bad_end_date_format_raises_validation_error(monkeypatch):
+    _record(monkeypatch)
+    with pytest.raises(ValidationError):
+        search.search_pitches("2024-06-01", "06/06/2024")
+
+
+def test_search_invalid_level_raises_validation_error(monkeypatch):
+    _record(monkeypatch)
+    with pytest.raises(ValidationError):
+        search.search_pitches("2024-06-01", "2024-06-02", level="college")
+
+
+def test_search_game_invalid_level_raises_validation_error():
+    with pytest.raises(ValidationError):
+        search.search_game(123, level="college")
+
+
 #####################################################################
 # player_id -> lookup param per player_type
 #####################################################################
+
+
+def test_search_invalid_player_type_raises_validation_error(monkeypatch):
+    _record(monkeypatch)
+    with pytest.raises(ValidationError):
+        search.search_pitches("2024-06-01", "2024-06-02", player_type="fielder")
 
 
 def test_search_pitcher_id_uses_pitchers_lookup(monkeypatch):
@@ -120,6 +149,12 @@ def test_search_batter_id_uses_batters_lookup(monkeypatch):
 #####################################################################
 # search_team resolves the team argument
 #####################################################################
+
+
+def test_search_team_invalid_side_raises_validation_error(monkeypatch):
+    _record(monkeypatch)
+    with pytest.raises(ValidationError):
+        search.search_team("LAD", "2024-06-01", "2024-06-02", side="neutral")
 
 
 def test_search_team_resolves_alias(monkeypatch):
