@@ -1,14 +1,14 @@
 """Baseball Savant (Statcast) pitch-level search.
 
 Returns raw ``list[dict]`` (one dict per pitch); all CSV values are strings —
-callers cast themselves. Built on :mod:`pastime.http` for transport, retry, and
+callers cast themselves. Built on :mod:`fungo.http` for transport, retry, and
 CSV parsing; this module adds the Savant-specific HTML-vs-CSV detection (Savant
 serves an HTML error page, not a 4xx, when params are unacceptable).
 
 Gotchas folded in from the Statcast skill references:
 
 - **30,000-row hard cap.** :func:`search_pitches` auto-chunks ranges longer
-  than 5 days into 1-day requests, fanned through :func:`pastime.http.map_concurrent`.
+  than 5 days into 1-day requests, fanned through :func:`fungo.http.map_concurrent`.
   Even single high-volume days can approach the cap — add filters.
 - **Pipe-separated params must NOT be URL-encoded.** ``http.request_bytes`` uses
   ``safe="|"``. Join multi-value filters with ``"|"`` (e.g. ``"FF|SL|CH|"``).
@@ -43,10 +43,10 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any
 
-from pastime import constants, http
-from pastime.constants import resolve_team  # re-exported for convenience
-from pastime.exceptions import SavantError
-from pastime.statcast.physics import axis_to_clock
+from fungo import constants, http
+from fungo.constants import resolve_team  # re-exported for convenience
+from fungo.exceptions import SavantError, ValidationError
+from fungo.statcast.physics import axis_to_clock
 
 #####################################################################
 # Constants
@@ -58,10 +58,12 @@ SEARCH_PATH_MILB = "/statcast-search-minors/csv"
 MAX_ROWS_PER_QUERY = 30_000
 DEFAULT_CHUNK_DAYS = 1
 DEFAULT_DELAY = 1.0  # seconds between chunked requests
+_VALID_LEVELS = {"mlb", "milb"}
+_VALID_PLAYER_TYPES = {"pitcher", "batter"}
+_VALID_SIDES = {"any", "home", "away"}
 
 __all__ = [
     "aggregate_pitcher_arsenal",
-    "fetch_csv",
     "get_pitcher_arsenal",
     "resolve_team",
     "search_game",
@@ -73,25 +75,25 @@ __all__ = [
 
 
 #####################################################################
-# Core: fetch_csv (HTML detection lives here)
+# Core: _fetch_csv (HTML detection lives here)
 #####################################################################
 
 
-def fetch_csv(
+def _fetch_csv(
     url: str, params: dict[str, Any] | None = None, **kw: Any
 ) -> list[dict[str, Any]]:
     """Fetch a CSV endpoint from Baseball Savant and return ``list[dict]``.
 
-    Wraps :func:`pastime.http.request_bytes` + :func:`pastime.http.parse_csv`,
+    Wraps :func:`fungo.http.request_bytes` + :func:`fungo.http.parse_csv`,
     adding Savant-specific HTML detection: Savant returns an HTML page (HTTP 200)
     rather than a 4xx when given parameters it cannot serve as CSV. That HTML is
-    detected here and surfaced as a :class:`~pastime.exceptions.SavantError`.
+    detected here and surfaced as a :class:`~fungo.exceptions.SavantError`.
 
     Args:
         url: Full URL (query string optional).
         params: Query parameters to append. ``None`` values are dropped by
             transport.
-        **kw: Forwarded to :func:`pastime.http.request_bytes` (``retries``,
+        **kw: Forwarded to :func:`fungo.http.request_bytes` (``retries``,
             ``timeout``, ``headers``).
 
     Returns:
@@ -152,7 +154,7 @@ def search_pitches(
     """Fetch pitch-level Statcast data from Baseball Savant.
 
     Ranges spanning more than 5 days are auto-chunked into 1-day requests (the
-    30k-row cap defense) and fanned through :func:`pastime.http.map_concurrent`
+    30k-row cap defense) and fanned through :func:`fungo.http.map_concurrent`
     with a bounded thread pool, a politeness ``delay`` between submissions, and
     opt-in progress. Per-day results are flattened in date order.
 
@@ -176,12 +178,23 @@ def search_pitches(
         SavantError: If ``start_date`` is after ``end_date``, or a response is
             HTML rather than CSV.
     """
-    dt_start = datetime.strptime(start_date, "%Y-%m-%d")
-    dt_end = datetime.strptime(end_date, "%Y-%m-%d")
+    try:
+        dt_start = datetime.strptime(start_date, "%Y-%m-%d")
+    except ValueError:
+        raise ValidationError(start_date, "start_date", ["YYYY-MM-DD format"]) from None
+    try:
+        dt_end = datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        raise ValidationError(end_date, "end_date", ["YYYY-MM-DD format"]) from None
 
     if dt_start > dt_end:
         raise SavantError(f"start_date {start_date} is after end_date {end_date}")
 
+    if player_type not in _VALID_PLAYER_TYPES:
+        raise ValidationError(player_type, "player_type", sorted(_VALID_PLAYER_TYPES))
+
+    if level not in _VALID_LEVELS:
+        raise ValidationError(level, "level", sorted(_VALID_LEVELS))
     path = SEARCH_PATH_MILB if level == "milb" else SEARCH_PATH_MLB
     base = f"{BASE_URL}{path}"
 
@@ -198,7 +211,7 @@ def search_pitches(
         single = dict(base_params)
         single["game_date_gt"] = start_date
         single["game_date_lt"] = end_date
-        return fetch_csv(base, params=single)
+        return _fetch_csv(base, params=single)
 
     days: list[str] = []
     current = dt_start
@@ -210,7 +223,7 @@ def search_pitches(
         day_params = dict(base_params)
         day_params["game_date_gt"] = day
         day_params["game_date_lt"] = day
-        return fetch_csv(base, params=day_params)
+        return _fetch_csv(base, params=day_params)
 
     per_day = http.map_concurrent(
         fetch_day,
@@ -228,7 +241,7 @@ def statcast_search(*args: Any, **kwargs: Any) -> list[dict[str, Any]]:
 
     Retained for callers familiar with the pre-1.0 API and pybaseball-style
     naming. New code should prefer ``search_pitches`` inside the
-    ``pastime.statcast`` namespace.
+    ``fungo.statcast`` namespace.
     """
     return search_pitches(*args, **kwargs)
 
@@ -251,11 +264,13 @@ def search_game(
     Returns:
         ``list[dict]`` — one pitch per row.
     """
+    if level not in _VALID_LEVELS:
+        raise ValidationError(level, "level", sorted(_VALID_LEVELS))
     path = SEARCH_PATH_MILB if level == "milb" else SEARCH_PATH_MLB
     params = _search_base_params()
     params["game_pk"] = str(game_pk)
     params.update(filters)
-    return fetch_csv(f"{BASE_URL}{path}", params=params)
+    return _fetch_csv(f"{BASE_URL}{path}", params=params)
 
 
 def search_matchup(
@@ -308,7 +323,7 @@ def search_team(
 ) -> list[dict[str, Any]]:
     """Fetch every pitch involving a team over a date range.
 
-    The ``team`` argument is resolved via :func:`pastime.constants.resolve_team`,
+    The ``team`` argument is resolved via :func:`fungo.constants.resolve_team`,
     so a code (``"LAD"``), full name, city, or alias (``"Dodgers"``) all work.
 
     Args:
@@ -326,6 +341,8 @@ def search_team(
     Raises:
         ValidationError: If ``team`` resolves to no known club.
     """
+    if side not in _VALID_SIDES:
+        raise ValidationError(side, "side", sorted(_VALID_SIDES))
     code = constants.resolve_team(team)
     team_filters = dict(filters)
     if side == "home":
@@ -392,7 +409,7 @@ def aggregate_pitcher_arsenal(
     ``n_pitches``, ``usage_pct`` (share of that pitcher's total pitches when
     grouping on ``pitcher``), ``avg_<metric>`` means (``None`` if all missing),
     and ``avg_tilt`` (clock string from ``avg_spin_axis`` via
-    :func:`~pastime.statcast.physics.axis_to_clock`) when spin axis is present.
+    :func:`~fungo.statcast.physics.axis_to_clock`) when spin axis is present.
 
     Args:
         rows: ``list[dict]`` from :func:`search_pitches`.

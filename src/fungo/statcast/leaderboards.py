@@ -1,8 +1,8 @@
 """Baseball Savant leaderboard registry, fetcher, and typed wrappers.
 
 Returns raw ``list[dict]`` for CSV leaderboards; HTML-backed leaderboards
-(park factors, hot stove, top performers, rolling windows) return parsed JSON
-via :func:`fetch_html_json`.
+(park factors, hot stove, rolling windows) return parsed JSON
+via :func:`_fetch_html_json`.
 
 Every registry entry is a dict with these fields:
 
@@ -22,7 +22,7 @@ Every registry entry is a dict with these fields:
 For non-CSV leaderboards (HTML-embedded JSON or browser-only):
 
     csv_available      False
-    access_via         "fetch_html_json:<var_name>" | "browser_only"
+    access_via         "_fetch_html_json:<var_name>" | "browser_only"
 
 ``year_format`` is load-bearing — it controls how :func:`fetch_leaderboard`
 emits the season into the query string:
@@ -45,9 +45,9 @@ import contextlib
 import re
 from typing import Any
 
-from pastime import http
-from pastime.exceptions import SavantError, ValidationError
-from pastime.statcast.search import BASE_URL, fetch_csv
+from fungo import http
+from fungo.exceptions import SavantError, ValidationError
+from fungo.statcast.search import BASE_URL, _fetch_csv
 
 #####################################################################
 # URL path overrides
@@ -957,22 +957,7 @@ LEADERBOARDS: dict[str, dict[str, Any]] = {
         ],
         "notes": "HTML-scraped (no CSV). Use get_park_factors() wrapper.",
         "csv_available": False,
-        "access_via": "fetch_html_json:data",
-    },
-    "top-performers": {
-        "category": "other",
-        "display_name": "Top Performers (Rolling Window)",
-        "type_param": ["batter", "pitcher"],
-        "required_params": ["year"],
-        "optional_params": ["type", "metric", "days"],
-        "min_param": None,
-        "year_start": 2015,
-        "year_format": "int",
-        "player_id_behavior": "unknown",
-        "key_columns": [],
-        "notes": "HTML-embedded JSON (no CSV). Use get_top_performers() wrapper.",
-        "csv_available": False,
-        "access_via": "fetch_html_json:data",
+        "access_via": "_fetch_html_json:data",
     },
     "rolling": {
         "category": "other",
@@ -990,7 +975,7 @@ LEADERBOARDS: dict[str, dict[str, Any]] = {
             "wrapper. Returns a dict — inspect structure before extracting."
         ),
         "csv_available": False,
-        "access_via": "fetch_html_json:rolling",
+        "access_via": "_fetch_html_json:rolling",
     },
     "hot-stove": {
         "category": "other",
@@ -1005,7 +990,7 @@ LEADERBOARDS: dict[str, dict[str, Any]] = {
         "key_columns": [],
         "notes": "HTML-embedded JSON. Use get_hot_stove() wrapper.",
         "csv_available": False,
-        "access_via": "fetch_html_json:HOT_STOVE_BATTER_DATA",
+        "access_via": "_fetch_html_json:HOT_STOVE_BATTER_DATA",
     },
 }
 
@@ -1082,6 +1067,10 @@ def _emit_year(
     year_format = LEADERBOARDS.get(slug, {}).get("year_format", "int")
     if year_format == "camelCase_season":
         if isinstance(year, (tuple, list)):
+            if not year:
+                raise ValidationError(
+                    year, "year", ["a non-empty list or tuple of seasons"]
+                )
             query["seasonStart"] = str(min(year))
             query["seasonEnd"] = str(max(year))
         else:
@@ -1161,7 +1150,7 @@ def fetch_leaderboard(
             if pid_behavior == "ignored":
                 needs_client_filter = True
 
-    rows = fetch_csv(url, params=query)
+    rows = _fetch_csv(url, params=query)
 
     if player_id is not None and needs_client_filter:
         pid_str = str(player_id)
@@ -1205,16 +1194,24 @@ def get_leaderboard(
     meta = LEADERBOARDS[slug]
 
     if meta.get("csv_available") is False:
-        raise ValueError(
-            f"{slug!r} has no CSV endpoint (access_via={meta.get('access_via')}). "
-            "Use the typed wrapper instead (e.g., get_park_factors, "
-            "get_top_performers, get_rolling_windows, get_hot_stove)."
+        raise ValidationError(
+            slug,
+            "leaderboard",
+            [
+                f"a CSV-available slug (access_via={meta.get('access_via')} — "
+                "use the typed wrapper instead: get_park_factors, "
+                "get_rolling_windows, get_hot_stove)"
+            ],
         )
 
     if meta.get("year_format") == "special" and isinstance(year, int):
-        raise ValueError(
-            f"{slug!r} requires a composite year string (e.g., '2024_spin-based'). "
-            "Use active_spin_year(year, method) to build it."
+        raise ValidationError(
+            year,
+            f"year for {slug!r}",
+            [
+                "a composite year string (e.g., '2024_spin-based')"
+                " — use active_spin_year(year, method)"
+            ],
         )
 
     return fetch_leaderboard(slug, year=year, **params)
@@ -1243,7 +1240,7 @@ def active_spin_year(year: int, method: str = "spin-based") -> str:
     return f"{year}_{method}"
 
 
-def cast_numeric(
+def _cast_numeric(
     rows: list[dict[str, Any]], cols: list[str] | None = None
 ) -> list[dict[str, Any]]:
     """Return a NEW ``list[dict]`` with numeric columns coerced to ``float``.
@@ -1976,7 +1973,7 @@ def _brace_match(text: str, start_idx: int, open_char: str, close_char: str) -> 
     )
 
 
-def fetch_html_json(
+def _fetch_html_json(
     url: str, var_name: str = "data", params: dict[str, Any] | None = None, **kw: Any
 ) -> dict[str, Any] | list[Any]:
     """Fetch an HTML page and extract an inline JSON blob assigned to a JS var.
@@ -1990,7 +1987,7 @@ def fetch_html_json(
         url: Full URL to fetch.
         var_name: JS variable name to extract.
         params: Optional query params.
-        **kw: Forwarded to :func:`pastime.http.request_bytes`.
+        **kw: Forwarded to :func:`fungo.http.request_bytes`.
 
     Returns:
         The parsed JSON value (``dict`` or ``list``).
@@ -2042,7 +2039,7 @@ def get_park_factors(
         ``list[dict]`` — one row per venue.
     """
     url = f"{BASE_URL}/leaderboard/statcast-park-factors"
-    return fetch_html_json(
+    return _fetch_html_json(
         url,
         var_name="data",
         params={
@@ -2067,35 +2064,7 @@ def get_hot_stove(year: int, side: str = "batter") -> dict[str, Any] | list[Any]
     """
     url = f"{BASE_URL}/leaderboard/hot-stove"
     var_name = "HOT_STOVE_BATTER_DATA" if side == "batter" else "HOT_STOVE_PITCHER_DATA"
-    return fetch_html_json(url, var_name=var_name, params={"year": str(year)})
-
-
-def get_top_performers(
-    year: int, type: str = "batter", metric: str = "exit_velocity_avg", days: int = 7
-) -> dict[str, Any] | list[Any]:
-    """Rolling-window Top Performers leaderboard (HTML-embedded JSON, not CSV).
-
-    Baseball Savant currently serves this page with ``var data = {};`` and renders
-    the visible cards directly in HTML. An empty dict is treated as unavailable
-    rather than returned silently.
-    """
-    url = f"{BASE_URL}/leaderboard/top-performers"
-    data = fetch_html_json(
-        url,
-        var_name="data",
-        params={
-            "year": str(year),
-            "type": type,
-            "metric": metric,
-            "days": str(days),
-        },
-    )
-    if data == {}:
-        raise SavantError(
-            "Top Performers JSON payload is empty; Baseball Savant currently "
-            "renders this board directly in HTML."
-        )
-    return data
+    return _fetch_html_json(url, var_name=var_name, params={"year": str(year)})
 
 
 def get_rolling_windows(year: int, **params: Any) -> dict[str, Any] | list[Any]:
@@ -2106,4 +2075,4 @@ def get_rolling_windows(year: int, **params: Any) -> dict[str, Any] | list[Any]:
     url = f"{BASE_URL}/leaderboard/rolling"
     query = {"year": str(year)}
     query.update({k: str(v) for k, v in params.items() if v is not None})
-    return fetch_html_json(url, var_name="rolling", params=query)
+    return _fetch_html_json(url, var_name="rolling", params=query)

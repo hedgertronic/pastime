@@ -3,23 +3,21 @@
 Three modules, all returning raw ``list[dict]`` (HTML-backed leaderboards return
 parsed JSON):
 
-- :mod:`pastime.statcast.search` — pitch-level search, matchup/team/game
+- :mod:`fungo.statcast.search` — pitch-level search, matchup/team/game
   convenience queries, and per-arsenal aggregation.
-- :mod:`pastime.statcast.leaderboards` — the leaderboard registry, a
+- :mod:`fungo.statcast.leaderboards` — the leaderboard registry, a
   ``year_format``-aware fetcher, typed wrappers for ~33 boards, percentile
-  rankings, and HTML-backed scrapers.
-- :mod:`pastime.statcast.physics` — Nathan (2021) derived spin columns and
+  rankings, and HTML-backed scrapers (park factors, hot stove, rolling windows).
+- :mod:`fungo.statcast.physics` — Nathan (2021) derived spin columns and
   spin-axis-to-clock conversion.
 """
 
 from __future__ import annotations
 
-from pastime.statcast.leaderboards import (
+from fungo.statcast.leaderboards import (
     LEADERBOARDS,
     active_spin_year,
-    cast_numeric,
     describe_leaderboard,
-    fetch_html_json,
     fetch_leaderboard,
     get_abs_challenges,
     get_active_spin,
@@ -62,14 +60,12 @@ from pastime.statcast.leaderboards import (
     get_swing_take,
     get_swing_timing_miss_distance,
     get_timer_infractions,
-    get_top_performers,
     get_year_to_year,
     list_leaderboards,
 )
-from pastime.statcast.physics import add_spin_columns, axis_to_clock
-from pastime.statcast.search import (
+from fungo.statcast.physics import add_spin_columns, axis_to_clock
+from fungo.statcast.search import (
     aggregate_pitcher_arsenal,
-    fetch_csv,
     get_pitcher_arsenal,
     resolve_team,
     search_game,
@@ -85,10 +81,7 @@ __all__ = [
     "add_spin_columns",
     "aggregate_pitcher_arsenal",
     "axis_to_clock",
-    "cast_numeric",
     "describe_leaderboard",
-    "fetch_csv",
-    "fetch_html_json",
     "fetch_leaderboard",
     "get_abs_challenges",
     "get_active_spin",
@@ -132,7 +125,6 @@ __all__ = [
     "get_swing_take",
     "get_swing_timing_miss_distance",
     "get_timer_infractions",
-    "get_top_performers",
     "get_year_to_year",
     "list_leaderboards",
     "resolve_team",
